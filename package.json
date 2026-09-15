@@ -6,6 +6,16 @@
   "bin": {
     "goal-loop": "src/cli.js"
   },
+  "files": [
+    "src",
+    "README.md",
+    "README.zh-CN.md",
+    "LICENSE",
+    "INSTALL_FOR_CODEX.md",
+    "docs",
+    "examples",
+    "skills"
+  ],
   "scripts": {
     "test": "node --test test/*.test.js",
     "check": "node --check src/*.js && node --test test/*.test.js",
