@@ -1,13 +1,18 @@
-# Downloadable ChatGPT Web Skills
+# Prebuilt development downloads
 
-This folder contains ready-to-upload ZIP packages for the two ChatGPT Web Skills shipped with Goal Loop.
+This `dist/` folder contains convenience copies of the two ChatGPT Web Skill ZIPs for the current development branch.
 
-## Packages
+For normal installation, prefer a tagged GitHub Release. Tagged releases are designed to contain both the Web Skills **and** the local Goal Loop Runner.
+
+See:
+
+- [`docs/RELEASE.md`](../docs/RELEASE.md)
+- [`docs/RELEASE.zh-CN.md`](../docs/RELEASE.zh-CN.md)
+
+## Web Skill packages in this folder
 
 - [`grill-me-web-skill.zip`](grill-me-web-skill.zip) — requirements interrogation / `/grill`
 - [`goal-loop-web-skill.zip`](goal-loop-web-skill.zip) — spec/phase/task dispatch / `/goal phase`, `/goal full`, `/loop`
-
-## Install in ChatGPT
 
 Download each ZIP separately, then upload/install each as its own Skill in ChatGPT.
 
@@ -18,4 +23,24 @@ The source files live at:
 - `skills/grill-me/SKILL.md`
 - `skills/goal-loop/SKILL.md`
 
-If the ChatGPT uploader accepts a plain `SKILL.md`, you can also upload those source files directly instead of the packaged ZIPs.
+If the ChatGPT uploader accepts a plain `SKILL.md`, you can also upload those source files directly.
+
+## What a tagged Release contains
+
+The automated release workflow packages:
+
+```text
+grill-me-web-skill-vX.Y.Z.zip
+goal-loop-web-skill-vX.Y.Z.zip
+goal-loop-local-vX.Y.Z.tgz
+goal-loop-local-vX.Y.Z.zip
+SHA256SUMS.txt
+```
+
+The local `.tgz` can be installed with:
+
+```bash
+npm install -g ./goal-loop-local-vX.Y.Z.tgz
+```
+
+The local `.zip` is for users who prefer a source checkout style installation (`npm install`, `npm run check`, `npm link`).
