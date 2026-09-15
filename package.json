@@ -1,0 +1,18 @@
+{
+  "name": "goal-loop",
+  "version": "0.2.0",
+  "description": "Repo-driven goal/phase/task orchestrator for ChatGPT planning + local Codex execution.",
+  "type": "module",
+  "bin": {
+    "goal-loop": "src/cli.js"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "check": "node --check src/*.js && node --test test/*.test.js",
+    "build": "node --check src/*.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT"
+}

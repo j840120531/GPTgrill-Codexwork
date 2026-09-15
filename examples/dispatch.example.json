@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "revision": 1,
+  "goalId": "HZ-004",
+  "title": "Evaluator hardening",
+  "status": "ready",
+  "mode": "phase",
+  "spec": "specs/HZ-004/SPEC.md",
+  "phases": [
+    {
+      "id": "P1",
+      "title": "Validation core",
+      "tasks": [
+        {
+          "id": "P1-T01",
+          "title": "Deterministic validation errors",
+          "file": "specs/HZ-004/tasks/P1-T01.md"
+        },
+        {
+          "id": "P1-T02",
+          "title": "Regression coverage",
+          "file": "specs/HZ-004/tasks/P1-T02.md"
+        }
+      ]
+    },
+    {
+      "id": "P2",
+      "title": "Integration",
+      "tasks": [
+        {
+          "id": "P2-T01",
+          "title": "Wire validator into evaluator",
+          "file": "specs/HZ-004/tasks/P2-T01.md"
+        }
+      ]
+    }
+  ],
+  "execution": {
+    "baseBranch": "main",
+    "workBranch": "goal-loop/HZ-004",
+    "remote": "origin",
+    "autoPush": true,
+    "maxReviewIterations": 5,
+    "phaseReview": true,
+    "finalReview": true
+  }
+}
