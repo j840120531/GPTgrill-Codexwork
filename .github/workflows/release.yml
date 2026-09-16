@@ -5,19 +5,31 @@ on:
     tags:
       - 'v*'
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version, e.g. 0.2.0 or v0.2.0. Must match package.json.'
+        required: true
+        type: string
 
 permissions:
   contents: write
+
+concurrency:
+  group: release-${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}
+  cancel-in-progress: false
 
 jobs:
   release:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout release source
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          # Manual releases always publish the current main HEAD. Tag-triggered
+          # releases build the exact tagged commit.
+          ref: ${{ github.event_name == 'workflow_dispatch' && 'main' || github.ref }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -25,25 +37,78 @@ jobs:
           node-version: '20'
           cache: npm
 
+      - name: Resolve and validate release version
+        id: version
+        shell: bash
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+
+          PKG_VERSION="$(node -p "require('./package.json').version")"
+          LOCK_VERSION="$(node -p "require('./package-lock.json').packages[''].version")"
+
+          if [[ "${PKG_VERSION}" != "${LOCK_VERSION}" ]]; then
+            echo "package.json version ${PKG_VERSION} does not match package-lock.json version ${LOCK_VERSION}." >&2
+            exit 1
+          fi
+
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
+            VERSION="${INPUT_VERSION#v}"
+            TAG="v${VERSION}"
+          else
+            TAG="${GITHUB_REF_NAME}"
+            VERSION="${TAG#v}"
+          fi
+
+          if [[ ! "${TAG}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.-]+)?$ ]]; then
+            echo "Invalid release tag/version: ${TAG}" >&2
+            exit 1
+          fi
+
+          if [[ "${VERSION}" != "${PKG_VERSION}" ]]; then
+            echo "Requested/tag version ${VERSION} does not match package.json version ${PKG_VERSION}." >&2
+            exit 1
+          fi
+
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Guard manual release
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          set -euo pipefail
+
+          git fetch origin main --tags
+          HEAD_SHA="$(git rev-parse HEAD)"
+          MAIN_SHA="$(git rev-parse origin/main)"
+
+          if [[ "${HEAD_SHA}" != "${MAIN_SHA}" ]]; then
+            echo "Manual releases must be created from the current main HEAD." >&2
+            echo "HEAD=${HEAD_SHA}" >&2
+            echo "origin/main=${MAIN_SHA}" >&2
+            exit 1
+          fi
+
+          if git ls-remote --exit-code --tags origin "refs/tags/${TAG}" >/dev/null 2>&1; then
+            echo "Tag ${TAG} already exists. Refusing to overwrite it." >&2
+            exit 1
+          fi
+
+          if gh release view "${TAG}" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1; then
+            echo "Release ${TAG} already exists. Refusing to overwrite it." >&2
+            exit 1
+          fi
+
       - name: Install
         run: npm ci
 
       - name: Verify
         run: npm run check
-
-      - name: Resolve version
-        id: version
-        shell: bash
-        run: |
-          PKG_VERSION="$(node -p "require('./package.json').version")"
-          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
-            TAG_VERSION="${GITHUB_REF_NAME#v}"
-            if [[ "${TAG_VERSION}" != "${PKG_VERSION}" ]]; then
-              echo "Tag version ${TAG_VERSION} does not match package.json version ${PKG_VERSION}." >&2
-              exit 1
-            fi
-          fi
-          echo "version=${PKG_VERSION}" >> "$GITHUB_OUTPUT"
 
       - name: Build release assets
         shell: bash
@@ -61,13 +126,14 @@ jobs:
           PACK_FILE="$(npm pack --pack-destination release-assets --silent | tail -n 1)"
           mv "release-assets/${PACK_FILE}" "release-assets/goal-loop-local-v${VERSION}.tgz"
 
-          # Portable source bundle for users who prefer clone/unzip + npm link.
+          # Portable source bundle for users who prefer unzip + npm link.
+          # Include tests because the install guide asks users to run npm run check.
           git archive \
             --format=zip \
             --prefix="goal-loop-v${VERSION}/" \
             -o "release-assets/goal-loop-local-v${VERSION}.zip" \
             HEAD \
-            src package.json package-lock.json README.md README.zh-CN.md LICENSE \
+            src test package.json package-lock.json README.md README.zh-CN.md LICENSE \
             INSTALL_FOR_CODEX.md docs examples skills
 
           (
@@ -88,10 +154,23 @@ jobs:
           name: goal-loop-release-v${{ steps.version.outputs.version }}
           path: release-assets/
 
+      - name: Create release tag for manual run
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "${TAG}" -m "Goal Loop ${TAG}"
+          git push origin "refs/tags/${TAG}"
+
       - name: Publish GitHub Release
-        if: github.ref_type == 'tag'
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: Goal Loop ${{ steps.version.outputs.tag }}
           generate_release_notes: true
           files: |
             release-assets/grill-me-web-skill-v${{ steps.version.outputs.version }}.zip
