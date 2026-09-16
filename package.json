@@ -1,6 +1,6 @@
 {
   "name": "goal-loop",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Repo-driven goal/phase/task orchestrator for ChatGPT planning + local Codex execution.",
   "type": "module",
   "bin": {
