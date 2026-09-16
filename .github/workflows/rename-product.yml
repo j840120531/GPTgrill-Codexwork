@@ -1,0 +1,128 @@
+name: Rename product identifiers
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/rename-request'
+
+permissions:
+  contents: write
+
+jobs:
+  rename:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Rename product surface
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          test "$(tr -d '[:space:]' < .github/rename-request)" = "GPTgrill-Codexwork"
+
+          if [[ -d skills/goal-loop ]]; then
+            git mv skills/goal-loop skills/gptgrill-codexwork
+          fi
+
+          if git ls-files --error-unmatch dist/goal-loop-web-skill.zip >/dev/null 2>&1; then
+            git rm -f dist/goal-loop-web-skill.zip
+          fi
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          replacements = [
+              ('j840120531/goal-loop', 'j840120531/GPTgrill-Codexwork'),
+              ('com.goalloop', 'com.gptgrill.codexwork'),
+              ('GOAL_LOOP', 'GPTGRILL_CODEXWORK'),
+              ('Goal Loop', 'GPTgrill-Codexwork'),
+              ('goal-loop', 'gptgrill-codexwork'),
+          ]
+
+          skip_parts = {'.git'}
+          skip_suffixes = {'.zip', '.tgz', '.png', '.jpg', '.jpeg', '.webp', '.pdf'}
+
+          for p in Path('.').rglob('*'):
+              if not p.is_file() or any(part in skip_parts for part in p.parts):
+                  continue
+              if p.suffix.lower() in skip_suffixes:
+                  continue
+              try:
+                  text = p.read_text(encoding='utf-8')
+              except UnicodeDecodeError:
+                  continue
+              new = text
+              for old, repl in replacements:
+                  new = new.replace(old, repl)
+              new = new.replace('j840120531/gptgrill-codexwork', 'j840120531/GPTgrill-Codexwork')
+              if new != text:
+                  p.write_text(new, encoding='utf-8')
+          PY
+
+          npm version 0.3.0 --no-git-tag-version --allow-same-version
+
+          cat > docs/releases/v0.3.0.md <<'EOF'
+          # GPTgrill-Codexwork v0.3.0
+
+          v0.3.0 completes the product-wide rename to **GPTgrill-Codexwork**.
+
+          Breaking identifier changes:
+
+          - npm package: `gptgrill-codexwork`
+          - CLI: `gptgrill-codexwork`
+          - repo control directory: `.gptgrill-codexwork/`
+          - runtime state directory: `~/.gptgrill-codexwork/`
+          - default work branch prefix: `gptgrill-codexwork/`
+          - environment prefix: `GPTGRILL_CODEXWORK_`
+          - launchd/log identifiers now use `gptgrill-codexwork`
+          - orchestration web skill slug: `gptgrill-codexwork`
+
+          Existing pre-v0.3 installations should remove the old global link/package before linking or installing v0.3.0.
+          EOF
+
+          rm -f dist/gptgrill-codexwork-web-skill.zip dist/grill-me-web-skill.zip
+          (cd skills && zip -qr ../dist/gptgrill-codexwork-web-skill.zip gptgrill-codexwork)
+          (cd skills && zip -qr ../dist/grill-me-web-skill.zip grill-me)
+          git add -f dist/gptgrill-codexwork-web-skill.zip dist/grill-me-web-skill.zip
+
+          npm ci
+          npm run check
+
+          if git grep -n -I -E 'Goal Loop|goal-loop|GOAL_LOOP|com\.goalloop' -- ':!docs/releases/v0.3.0.md'; then
+            echo 'Found stale product identifiers after rename.' >&2
+            exit 1
+          fi
+
+          if git ls-files | grep -E '(^|/)goal-loop(/|$)|goal-loop-web-skill'; then
+            echo 'Found stale product paths after rename.' >&2
+            exit 1
+          fi
+
+          node - <<'NODE'
+          const pkg = require('./package.json');
+          if (pkg.name !== 'gptgrill-codexwork') throw new Error(`unexpected package name: ${pkg.name}`);
+          if (pkg.version !== '0.3.0') throw new Error(`unexpected version: ${pkg.version}`);
+          if (!pkg.bin || pkg.bin['gptgrill-codexwork'] !== 'src/cli.js') throw new Error('CLI bin rename missing');
+          NODE
+
+      - name: Commit rename
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "refactor: rename product to GPTgrill-Codexwork"
+          git push origin HEAD:main
