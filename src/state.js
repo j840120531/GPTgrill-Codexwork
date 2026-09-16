@@ -3,7 +3,7 @@ import path from 'node:path';
 import { promises as fs } from 'node:fs';
 import { ensureDir, shortHash } from './util.js';
 
-export const defaultStateDir = () => path.join(os.homedir(), '.goal-loop');
+export const defaultStateDir = () => path.join(os.homedir(), '.gptgrill-codexwork');
 export const statePath = (stateDir, workspace, goalId) => path.join(stateDir, 'state', shortHash(path.resolve(workspace)), `${goalId}.json`);
 
 export async function readState(stateDir, workspace, goalId) {
@@ -40,9 +40,9 @@ export async function acquireWorkspaceLock(stateDir, workspace) {
       if (error?.code !== 'EEXIST') throw error;
       let owner;
       try { owner = JSON.parse(await fs.readFile(path.join(p, 'owner.json'), 'utf8')); } catch { owner = undefined; }
-      if (owner && pidAlive(owner.pid)) throw new Error(`Goal Loop is already running for this workspace (pid ${owner.pid})`);
+      if (owner && pidAlive(owner.pid)) throw new Error(`GPTgrill-Codexwork is already running for this workspace (pid ${owner.pid})`);
       await fs.rm(p, { recursive: true, force: true });
     }
   }
-  throw new Error('Could not acquire Goal Loop workspace lock');
+  throw new Error('Could not acquire GPTgrill-Codexwork workspace lock');
 }

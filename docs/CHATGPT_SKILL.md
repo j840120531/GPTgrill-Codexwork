@@ -1,6 +1,6 @@
 # ChatGPT Web integration
 
-The installable web Skill lives at [`skills/goal-loop/SKILL.md`](../skills/goal-loop/SKILL.md).
+The installable web Skill lives at [`skills/gptgrill-codexwork/SKILL.md`](../skills/gptgrill-codexwork/SKILL.md).
 
 Recommended flow:
 
@@ -15,6 +15,6 @@ Recommended flow:
   -> create revision 1 dispatch manifest
 ```
 
-When a `task` or `phase` run pauses, Goal Loop records the pause locally and keeps the pushed work branch intact. The always-on watcher will **not** silently continue the next boundary. After the user explicitly approves continuation, update the dispatch manifest on the control branch and increment `revision` by 1.
+When a `task` or `phase` run pauses, GPTgrill-Codexwork records the pause locally and keeps the pushed work branch intact. The always-on watcher will **not** silently continue the next boundary. After the user explicitly approves continuation, update the dispatch manifest on the control branch and increment `revision` by 1.
 
 `/goal full` or `/loop` uses `mode: goal`, which does not pause at phase boundaries unless the run is blocked.

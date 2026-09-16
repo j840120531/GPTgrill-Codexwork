@@ -2,7 +2,7 @@
 
 This `dist/` folder contains convenience copies of the two ChatGPT Web Skill ZIPs for the current development branch.
 
-For normal installation, prefer a tagged GitHub Release. Tagged releases are designed to contain both the Web Skills **and** the local Goal Loop Runner.
+For normal installation, prefer a tagged GitHub Release. Tagged releases are designed to contain both the Web Skills **and** the local GPTgrill-Codexwork Runner.
 
 See:
 
@@ -12,16 +12,16 @@ See:
 ## Web Skill packages in this folder
 
 - [`grill-me-web-skill.zip`](grill-me-web-skill.zip) — requirements interrogation / `/grill`
-- [`goal-loop-web-skill.zip`](goal-loop-web-skill.zip) — spec/phase/task dispatch / `/goal phase`, `/goal full`, `/loop`
+- [`gptgrill-codexwork-web-skill.zip`](gptgrill-codexwork-web-skill.zip) — spec/phase/task dispatch / `/goal phase`, `/goal full`, `/loop`
 
 Download each ZIP separately, then upload/install each as its own Skill in ChatGPT.
 
-Do **not** upload the entire Goal Loop repository ZIP as a single Skill.
+Do **not** upload the entire GPTgrill-Codexwork repository ZIP as a single Skill.
 
 The source files live at:
 
 - `skills/grill-me/SKILL.md`
-- `skills/goal-loop/SKILL.md`
+- `skills/gptgrill-codexwork/SKILL.md`
 
 If the ChatGPT uploader accepts a plain `SKILL.md`, you can also upload those source files directly.
 
@@ -31,16 +31,16 @@ The automated release workflow packages:
 
 ```text
 grill-me-web-skill-vX.Y.Z.zip
-goal-loop-web-skill-vX.Y.Z.zip
-goal-loop-local-vX.Y.Z.tgz
-goal-loop-local-vX.Y.Z.zip
+gptgrill-codexwork-web-skill-vX.Y.Z.zip
+gptgrill-codexwork-local-vX.Y.Z.tgz
+gptgrill-codexwork-local-vX.Y.Z.zip
 SHA256SUMS.txt
 ```
 
 The local `.tgz` can be installed with:
 
 ```bash
-npm install -g ./goal-loop-local-vX.Y.Z.tgz
+npm install -g ./gptgrill-codexwork-local-vX.Y.Z.tgz
 ```
 
 The local `.zip` is for users who prefer a source checkout style installation (`npm install`, `npm run check`, `npm link`).

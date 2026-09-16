@@ -7,6 +7,6 @@ const m = { schemaVersion: 1, revision: 1, goalId: 'G1', title: 'Test', status: 
 test('prompt contract', () => {
   const p = taskPrompt(m, m.phases[0], m.phases[0].tasks[0], 4);
   assert.match(p, /Use Codex with ChatGPT/);
-  assert.match(p, /GOAL_LOOP_RESULT: DONE/);
+  assert.match(p, /GPTGRILL_CODEXWORK_RESULT: DONE/);
   assert.match(p, /Do NOT commit or push/);
 });

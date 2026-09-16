@@ -37,7 +37,7 @@
   ],
   "execution": {
     "baseBranch": "main",
-    "workBranch": "goal-loop/HZ-004",
+    "workBranch": "gptgrill-codexwork/HZ-004",
     "remote": "origin",
     "autoPush": true,
     "maxReviewIterations": 5,

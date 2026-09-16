@@ -1,10 +1,10 @@
 {
-  "name": "goal-loop",
-  "version": "0.2.1",
+  "name": "gptgrill-codexwork",
+  "version": "0.3.0",
   "description": "Repo-driven goal/phase/task orchestrator for ChatGPT planning + local Codex execution.",
   "type": "module",
   "bin": {
-    "goal-loop": "src/cli.js"
+    "gptgrill-codexwork": "src/cli.js"
   },
   "files": [
     "src",

@@ -20,7 +20,7 @@ export class Git {
 
   async assertClean() {
     const s = await this.run(['status', '--porcelain']);
-    if (s) throw new Error('Workspace has uncommitted changes. Commit/stash them before Goal Loop runs.');
+    if (s) throw new Error('Workspace has uncommitted changes. Commit/stash them before GPTgrill-Codexwork runs.');
   }
 
   async fetch(remote) { await this.run(['fetch', '--prune', remote]); }

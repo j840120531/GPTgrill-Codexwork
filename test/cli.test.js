@@ -9,22 +9,22 @@ const cli=path.join(repoRoot,'src','cli.js');
 
 function run(args){return spawnSync(process.execPath,[cli,...args],{cwd:repoRoot,encoding:'utf8'});}
 
-test('goal-loop --help exits successfully without a workspace',()=>{
+test('gptgrill-codexwork --help exits successfully without a workspace',()=>{
   const result=run(['--help']);
   assert.equal(result.status,0);
-  assert.match(result.stdout,/Goal Loop/);
+  assert.match(result.stdout,/GPTgrill-Codexwork/);
   assert.equal(result.stderr,'');
 });
 
-test('goal-loop -h exits successfully without a workspace',()=>{
+test('gptgrill-codexwork -h exits successfully without a workspace',()=>{
   const result=run(['-h']);
   assert.equal(result.status,0);
   assert.match(result.stdout,/Commands:/);
   assert.equal(result.stderr,'');
 });
 
-test('goal-loop with no command remains a usage error',()=>{
+test('gptgrill-codexwork with no command remains a usage error',()=>{
   const result=run([]);
   assert.equal(result.status,2);
-  assert.match(result.stderr,/Goal Loop/);
+  assert.match(result.stderr,/GPTgrill-Codexwork/);
 });

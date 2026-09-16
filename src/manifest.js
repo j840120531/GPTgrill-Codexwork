@@ -40,7 +40,7 @@ export function parseManifest(raw, source = '<memory>') {
   try {
     return { path: source, raw, sha256: sha256(raw), manifest: validateManifest(JSON.parse(raw)) };
   } catch (error) {
-    throw new Error(`Invalid Goal Loop manifest ${source}: ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(`Invalid GPTgrill-Codexwork manifest ${source}: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 
@@ -49,7 +49,7 @@ export async function loadManifest(filePath) {
 }
 
 export async function discoverManifests(workspace) {
-  const dir = path.join(workspace, '.goal-loop', 'dispatch');
+  const dir = path.join(workspace, '.gptgrill-codexwork', 'dispatch');
   let names;
   try { names = await fs.readdir(dir); } catch { return []; }
   const out = [];
@@ -58,7 +58,7 @@ export async function discoverManifests(workspace) {
 }
 
 export async function discoverManifestsFromGit(git, ref) {
-  const prefix = '.goal-loop/dispatch';
+  const prefix = '.gptgrill-codexwork/dispatch';
   const files = (await git.listFiles(ref, prefix)).filter(x => x.endsWith('.json')).sort();
   const out = [];
   for (const file of files) out.push(parseManifest(await git.show(ref, file), `${ref}:${file}`));

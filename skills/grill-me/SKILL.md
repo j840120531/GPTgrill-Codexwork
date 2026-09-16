@@ -141,4 +141,4 @@ When the user says `spec it` and exit criteria are satisfied, produce a compact 
 - Implementation decisions already agreed
 - Open implementation choices
 
-If the project uses Goal Loop, the next step is the `goal-loop` skill to write `SPEC.md`, phases/tasks, and a dispatch manifest after the user approves the spec.
+If the project uses GPTgrill-Codexwork, the next step is the `gptgrill-codexwork` skill to write `SPEC.md`, phases/tasks, and a dispatch manifest after the user approves the spec.

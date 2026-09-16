@@ -1,22 +1,22 @@
-# Goal Loop
+# GPTgrill-Codexwork
 
 [中文说明](README.zh-CN.md)
 
-**ChatGPT decides what to build. Codex builds it. ChatGPT reviews it. Goal Loop keeps the loop moving.**
+**ChatGPT decides what to build. Codex builds it. ChatGPT reviews it. GPTgrill-Codexwork keeps the loop moving.**
 
-Goal Loop is a repo-driven orchestration layer for a workflow where:
+GPTgrill-Codexwork is a repo-driven orchestration layer for a workflow where:
 
 - **ChatGPT Web** handles requirements, planning, specs, task decomposition, and review.
-- **Goal Loop** turns approved repo artifacts into an executable local workflow.
+- **GPTgrill-Codexwork** turns approved repo artifacts into an executable local workflow.
 - **Codex** owns implementation, shell commands, tests, and code changes.
 - **codex-with-chatgpt** connects Codex back to ChatGPT for planning/review/fix loops.
 - **Git** is the durable source of truth between the web planning side and the local execution side.
 
-Goal Loop is intentionally **not** a replacement for `codex-with-chatgpt`. It sits one layer above it.
+GPTgrill-Codexwork is intentionally **not** a replacement for `codex-with-chatgpt`. It sits one layer above it.
 
 ---
 
-## Why Goal Loop exists
+## Why GPTgrill-Codexwork exists
 
 Without an orchestrator, a typical workflow looks like this:
 
@@ -30,7 +30,7 @@ Without an orchestrator, a typical workflow looks like this:
 8. Copy review feedback back to Codex.
 9. Repeat for every task and every phase.
 
-Goal Loop automates the handoff and state management around steps 4-9.
+GPTgrill-Codexwork automates the handoff and state management around steps 4-9.
 
 The intended experience is closer to:
 
@@ -41,7 +41,7 @@ spec it
   -> produce a spec-ready synthesis
 /goal phase
   -> write SPEC / PHASES / TASKS / dispatch
-  -> local Goal Loop notices the dispatch
+  -> local GPTgrill-Codexwork notices the dispatch
   -> Codex executes
   -> ChatGPT reviews through codex-with-chatgpt
   -> Codex fixes issues
@@ -69,25 +69,25 @@ Or, when full autonomy is explicitly requested:
 │      │                                                              │
 │      ├─ clarify problem / constraints / non-goals / acceptance      │
 │      ▼                                                              │
-│  Goal Loop Web Skill                                                │
+│  GPTgrill-Codexwork Web Skill                                                │
 │      │                                                              │
 │      ├─ SPEC.md                                                     │
 │      ├─ PHASES.md                                                   │
 │      ├─ tasks/*.md                                                  │
-│      └─ .goal-loop/dispatch/<goal-id>.json                          │
+│      └─ .gptgrill-codexwork/dispatch/<goal-id>.json                          │
 └──────────────────────────────┬──────────────────────────────────────┘
                                │ GitHub / control branch
                                ▼
 ┌─────────────────────────────────────────────────────────────────────┐
 │ Target project repository                                           │
 │                                                                     │
-│  specs/...                 .goal-loop/dispatch/...                  │
+│  specs/...                 .gptgrill-codexwork/dispatch/...                  │
 │       │                            │                                │
 └───────┼────────────────────────────┼────────────────────────────────┘
         │                            │ git fetch
         │                            ▼
         │                   ┌────────────────────┐
-        │                   │ Goal Loop Runner   │
+        │                   │ GPTgrill-Codexwork Runner   │
         │                   │ local state machine│
         │                   └─────────┬──────────┘
         │                             │ codex exec --full-auto
@@ -112,31 +112,31 @@ Or, when full autonomy is explicitly requested:
 |---|---|---|
 | ChatGPT Web | requirements, planning, specs, review, human-facing decisions | local shell execution |
 | Grill Me Skill | clarify what should be built | implementation |
-| Goal Loop Web Skill | convert approved planning into durable repo artifacts and dispatch | local process execution |
-| Goal Loop Runner | watch dispatches, choose the next unit of work, manage execution state, commit/push, reports | product decisions |
+| GPTgrill-Codexwork Web Skill | convert approved planning into durable repo artifacts and dispatch | local process execution |
+| GPTgrill-Codexwork Runner | watch dispatches, choose the next unit of work, manage execution state, commit/push, reports | product decisions |
 | Codex | edit files, run commands/tests, implement tasks | deciding long-term project scope |
 | codex-with-chatgpt | Codex ↔ ChatGPT planning/review loop | task scheduling across phases |
 | Git | durable project truth and handoff layer | transient runtime state |
 
 ---
 
-# Important: Goal Loop has two parts
+# Important: GPTgrill-Codexwork has two parts
 
-A common source of confusion is the name “Goal Loop” being used for both the web workflow and the local runner.
+A common source of confusion is the name “GPTgrill-Codexwork” being used for both the web workflow and the local runner.
 
 ## 1. ChatGPT Web Skill
 
 File:
 
 ```text
-skills/goal-loop/SKILL.md
+skills/gptgrill-codexwork/SKILL.md
 ```
 
 This is installed in ChatGPT Web.
 
 It does **not** run Codex directly. It writes the planning and dispatch artifacts into the target repository.
 
-## 2. Local Goal Loop Runner
+## 2. Local GPTgrill-Codexwork Runner
 
 This repository itself is installed on the Mac/local machine.
 
@@ -147,10 +147,10 @@ Therefore a complete setup looks like:
 ```text
 ChatGPT Web
   ├─ Grill Me Skill
-  └─ Goal Loop Skill
+  └─ GPTgrill-Codexwork Skill
 
 Local machine
-  ├─ Goal Loop Runner
+  ├─ GPTgrill-Codexwork Runner
   ├─ Codex CLI
   └─ codex-with-chatgpt Skill
 ```
@@ -159,14 +159,14 @@ Local machine
 
 # Relationship with codex-with-chatgpt
 
-Goal Loop is designed to **use an existing codex-with-chatgpt installation**.
+GPTgrill-Codexwork is designed to **use an existing codex-with-chatgpt installation**.
 
 There is no intended conflict.
 
 The separation is:
 
 ```text
-Goal Loop
+GPTgrill-Codexwork
   decides: What task should run next?
   decides: Should execution stop at this task/phase boundary?
   manages: branch, runtime state, commit/push, reports
@@ -177,13 +177,13 @@ codex-with-chatgpt
   loops: PLAN -> EXECUTION -> EXECUTED -> REVIEW -> PLAN/DONE
 ```
 
-`goal-loop doctor` checks that the `codex-with-chatgpt` Skill exists in the Codex environment.
+`gptgrill-codexwork doctor` checks that the `codex-with-chatgpt` Skill exists in the Codex environment.
 
 ---
 
 # ChatGPT Project and workspace binding
 
-Goal Loop itself does not bind arbitrary ChatGPT conversations to arbitrary local folders.
+GPTgrill-Codexwork itself does not bind arbitrary ChatGPT conversations to arbitrary local folders.
 
 Workspace identity is primarily handled by **codex-with-chatgpt**.
 
@@ -199,13 +199,13 @@ one ChatGPT Project
 
 This prevents a random unrelated chat from silently controlling the wrong local repository.
 
-Goal Loop then operates on the **repository configured on the local machine** and on the dispatch manifests that appear in that repository's control branch.
+GPTgrill-Codexwork then operates on the **repository configured on the local machine** and on the dispatch manifests that appear in that repository's control branch.
 
 ## Project mode vs long-chat controller
 
 `codex-with-chatgpt` supports different conversation strategies.
 
-For Goal Loop, a useful pattern is to keep one long-lived **Controller Chat** for a workspace when you want the same web conversation to contain:
+For GPTgrill-Codexwork, a useful pattern is to keep one long-lived **Controller Chat** for a workspace when you want the same web conversation to contain:
 
 - requirement discussion,
 - goal dispatch,
@@ -223,13 +223,13 @@ c2c session set \
   --url "https://chatgpt.com/c/<controller-chat-id>"
 ```
 
-This is optional. Goal Loop itself does not require one specific ChatGPT chat URL; that conversation routing belongs to `codex-with-chatgpt`.
+This is optional. GPTgrill-Codexwork itself does not require one specific ChatGPT chat URL; that conversation routing belongs to `codex-with-chatgpt`.
 
 ---
 
 # Web Skills
 
-Goal Loop currently ships two web-facing Skills.
+GPTgrill-Codexwork currently ships two web-facing Skills.
 
 ## Grill Me
 
@@ -261,12 +261,12 @@ spec it
 
 `spec it` produces a spec-ready synthesis; it does not automatically start implementation.
 
-## Goal Loop Web Skill
+## GPTgrill-Codexwork Web Skill
 
 File:
 
 ```text
-skills/goal-loop/SKILL.md
+skills/gptgrill-codexwork/SKILL.md
 ```
 
 Purpose:
@@ -291,7 +291,7 @@ If ChatGPT allows direct Skill upload, upload these two files separately:
 
 ```text
 skills/grill-me/SKILL.md
-skills/goal-loop/SKILL.md
+skills/gptgrill-codexwork/SKILL.md
 ```
 
 Do **not** upload the entire repository ZIP as one Skill.
@@ -302,7 +302,7 @@ If you downloaded this repository as a ZIP from GitHub, unzip it first and uploa
 
 # Autonomy modes
 
-Goal Loop intentionally separates three levels of autonomy.
+GPTgrill-Codexwork intentionally separates three levels of autonomy.
 
 ## `task`
 
@@ -375,7 +375,7 @@ specs/
       P1-T02.md
       P2-T01.md
 
-.goal-loop/
+.gptgrill-codexwork/
   README.md
   dispatch/
     HZ-004.json
@@ -399,10 +399,10 @@ Durable engineering truth belongs in Git:
 
 Transient execution state does **not** belong in Git.
 
-Goal Loop stores runtime state under:
+GPTgrill-Codexwork stores runtime state under:
 
 ```text
-~/.goal-loop/state/<workspace-hash>/<goal-id>.json
+~/.gptgrill-codexwork/state/<workspace-hash>/<goal-id>.json
 ```
 
 Examples of transient state:
@@ -421,7 +421,7 @@ Examples of transient state:
 ChatGPT writes:
 
 ```text
-.goal-loop/dispatch/<goal-id>.json
+.gptgrill-codexwork/dispatch/<goal-id>.json
 ```
 
 Example:
@@ -462,7 +462,7 @@ See [`examples/dispatch.example.json`](examples/dispatch.example.json) for the c
 
 `revision` starts at `1`.
 
-For `task` and `phase` modes, Goal Loop deliberately pauses at the configured human boundary.
+For `task` and `phase` modes, GPTgrill-Codexwork deliberately pauses at the configured human boundary.
 
 To authorize another execution step, update the manifest and increment:
 
@@ -513,27 +513,27 @@ Acceptance criteria are what make autonomous review meaningful.
 
 # What happens during execution
 
-For each task, Goal Loop roughly does the following:
+For each task, GPTgrill-Codexwork roughly does the following:
 
 ```text
 1. fetch the control branch
 2. find a runnable dispatch manifest
 3. acquire a workspace lock
 4. ensure the workspace is clean
-5. checkout/create goal-loop/<goal-id>
+5. checkout/create gptgrill-codexwork/<goal-id>
 6. merge the latest control/base branch
 7. read SPEC + current task
 8. call Codex
 9. Codex invokes codex-with-chatgpt
 10. ChatGPT plans/reviews
 11. Codex fixes until DONE or BLOCKED
-12. Goal Loop commits the result
-13. Goal Loop pushes the goal branch
+12. GPTgrill-Codexwork commits the result
+13. GPTgrill-Codexwork pushes the goal branch
 14. update local runtime state
 15. continue or pause based on autonomy mode
 ```
 
-Goal Loop invokes Codex using the equivalent of:
+GPTgrill-Codexwork invokes Codex using the equivalent of:
 
 ```text
 codex exec --full-auto -C <workspace> -
@@ -550,7 +550,7 @@ The generated prompt tells Codex to:
 - iterate until ChatGPT returns DONE or the review limit is exhausted,
 - not commit or push itself.
 
-Git ownership stays with Goal Loop for deterministic orchestration.
+Git ownership stays with GPTgrill-Codexwork for deterministic orchestration.
 
 ---
 
@@ -559,13 +559,13 @@ Git ownership stays with Goal Loop for deterministic orchestration.
 Default work branch:
 
 ```text
-goal-loop/<goal-id>
+gptgrill-codexwork/<goal-id>
 ```
 
 Example:
 
 ```text
-goal-loop/HZ-004
+gptgrill-codexwork/HZ-004
 ```
 
 The control branch defaults to:
@@ -577,13 +577,13 @@ origin/main
 Override with:
 
 ```bash
-export GOAL_LOOP_CONTROL_REMOTE=origin
-export GOAL_LOOP_CONTROL_BRANCH=main
+export GPTGRILL_CODEXWORK_CONTROL_REMOTE=origin
+export GPTGRILL_CODEXWORK_CONTROL_BRANCH=main
 ```
 
 A manifest may also override the work branch through its `execution` section.
 
-Goal Loop refuses to start autonomous execution when the local workspace has unrelated uncommitted changes.
+GPTgrill-Codexwork refuses to start autonomous execution when the local workspace has unrelated uncommitted changes.
 
 ---
 
@@ -591,11 +591,11 @@ Goal Loop refuses to start autonomous execution when the local workspace has unr
 
 Task-level review is not the only review layer.
 
-After all tasks in a phase are complete, Goal Loop can trigger a separate **phase integration review**.
+After all tasks in a phase are complete, GPTgrill-Codexwork can trigger a separate **phase integration review**.
 
 This checks whether individually correct tasks work together correctly.
 
-After the final phase, Goal Loop can trigger a **goal-level final review** against the complete spec.
+After the final phase, GPTgrill-Codexwork can trigger a **goal-level final review** against the complete spec.
 
 Reports are written to:
 
@@ -618,11 +618,11 @@ reports/<goal-id>/FINAL.md
 
 Foreground execution is not inherently macOS-specific, but the included background service helper currently uses `launchd`.
 
-## Install Goal Loop Runner
+## Install GPTgrill-Codexwork Runner
 
 ```bash
-git clone https://github.com/j840120531/goal-loop.git
-cd goal-loop
+git clone https://github.com/j840120531/GPTgrill-Codexwork.git
+cd gptgrill-codexwork
 npm install
 npm run build
 npm test
@@ -632,14 +632,14 @@ npm link
 Verify:
 
 ```bash
-goal-loop --help
+gptgrill-codexwork --help
 ```
 
 ## Bootstrap one target project
 
 ```bash
-goal-loop bootstrap --workspace /path/to/project
-goal-loop doctor --workspace /path/to/project
+gptgrill-codexwork bootstrap --workspace /path/to/project
+gptgrill-codexwork doctor --workspace /path/to/project
 ```
 
 `doctor` checks key prerequisites including:
@@ -649,18 +649,18 @@ goal-loop doctor --workspace /path/to/project
 - `codex-with-chatgpt` Skill presence,
 - configured control remote,
 - fetchable control branch,
-- Goal Loop dispatch directory.
+- GPTgrill-Codexwork dispatch directory.
 
 ## Run once manually
 
 ```bash
-goal-loop run --workspace /path/to/project
+gptgrill-codexwork run --workspace /path/to/project
 ```
 
 ## Install the macOS watcher
 
 ```bash
-goal-loop install-service --workspace /path/to/project
+gptgrill-codexwork install-service --workspace /path/to/project
 ```
 
 The service polls every 30 seconds by default.
@@ -668,13 +668,13 @@ The service polls every 30 seconds by default.
 Logs are written under:
 
 ```text
-~/Library/Logs/goal-loop/
+~/Library/Logs/gptgrill-codexwork/
 ```
 
 Remove the watcher with:
 
 ```bash
-goal-loop uninstall-service --workspace /path/to/project
+gptgrill-codexwork uninstall-service --workspace /path/to/project
 ```
 
 ---
@@ -716,7 +716,7 @@ Review the synthesis before dispatching implementation.
 /goal phase
 ```
 
-The Goal Loop Web Skill writes the durable repo artifacts and a `ready` manifest.
+The GPTgrill-Codexwork Web Skill writes the durable repo artifacts and a `ready` manifest.
 
 ## 4. Local execution starts automatically
 
@@ -754,16 +754,16 @@ or:
 
 # Status and troubleshooting
 
-## Check Goal Loop state
+## Check GPTgrill-Codexwork state
 
 ```bash
-goal-loop status --workspace /path/to/project
+gptgrill-codexwork status --workspace /path/to/project
 ```
 
 ## Run health checks
 
 ```bash
-goal-loop doctor --workspace /path/to/project
+gptgrill-codexwork doctor --workspace /path/to/project
 ```
 
 ## Common reasons a run does not start
@@ -774,7 +774,7 @@ goal-loop doctor --workspace /path/to/project
 - control branch cannot be fetched;
 - `codex-with-chatgpt` Skill is missing;
 - required spec/task file is missing;
-- another Goal Loop process holds the workspace lock.
+- another GPTgrill-Codexwork process holds the workspace lock.
 
 ## Common reasons a run becomes blocked
 
@@ -785,13 +785,13 @@ goal-loop doctor --workspace /path/to/project
 - Git merge/push fails;
 - the approved spec conflicts with the current repository state.
 
-Goal Loop should stop rather than silently skip failed acceptance criteria.
+GPTgrill-Codexwork should stop rather than silently skip failed acceptance criteria.
 
 ---
 
 # Safety model
 
-Goal Loop provides orchestration boundaries, not a complete security sandbox.
+GPTgrill-Codexwork provides orchestration boundaries, not a complete security sandbox.
 
 `codex exec --full-auto` is powerful.
 
@@ -825,7 +825,7 @@ See [`docs/SECURITY.md`](docs/SECURITY.md).
 ├── skills/
 │   ├── grill-me/
 │   │   └── SKILL.md
-│   └── goal-loop/
+│   └── gptgrill-codexwork/
 │       └── SKILL.md
 ├── src/
 │   ├── cli.js
@@ -877,7 +877,7 @@ Before changing orchestration behavior, verify at minimum:
 
 # Current scope
 
-Goal Loop currently focuses on a single-machine, Git-backed, Codex-based development workflow.
+GPTgrill-Codexwork currently focuses on a single-machine, Git-backed, Codex-based development workflow.
 
 It is not yet intended to be:
 

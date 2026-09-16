@@ -14,7 +14,7 @@ async function sh(cmd, args, cwd) {
 }
 
 async function setupRepo(manifest) {
-  const root = await mkdtemp(path.join(os.tmpdir(), 'goal-loop-e2e-'));
+  const root = await mkdtemp(path.join(os.tmpdir(), 'gptgrill-codexwork-e2e-'));
   const origin = path.join(root, 'origin.git');
   const seed = path.join(root, 'seed');
   const work = path.join(root, 'work');
@@ -23,12 +23,12 @@ async function setupRepo(manifest) {
   await sh('git', ['config', 'user.email', 'test@example.com'], seed);
   await sh('git', ['config', 'user.name', 'Test'], seed);
   await mkdir(path.join(seed, 'specs', 'G1', 'tasks'), { recursive: true });
-  await mkdir(path.join(seed, '.goal-loop', 'dispatch'), { recursive: true });
+  await mkdir(path.join(seed, '.gptgrill-codexwork', 'dispatch'), { recursive: true });
   await writeFile(path.join(seed, 'AGENTS.md'), 'Test repo\n');
   await writeFile(path.join(seed, 'specs', 'G1', 'SPEC.md'), '# Spec\n');
   await writeFile(path.join(seed, 'specs', 'G1', 'tasks', 'T1.md'), '# Task 1\n- [ ] create result1.txt\n');
   await writeFile(path.join(seed, 'specs', 'G1', 'tasks', 'T2.md'), '# Task 2\n- [ ] create result2.txt\n');
-  await writeFile(path.join(seed, '.goal-loop', 'dispatch', 'G1.json'), JSON.stringify(manifest, null, 2));
+  await writeFile(path.join(seed, '.gptgrill-codexwork', 'dispatch', 'G1.json'), JSON.stringify(manifest, null, 2));
   await sh('git', ['add', '-A'], seed);
   await sh('git', ['commit', '-m', 'seed'], seed);
   await sh('git', ['remote', 'add', 'origin', origin], seed);
@@ -69,7 +69,7 @@ test('task mode pauses until manifest revision increases', async () => {
 prompt=$(cat)
 if printf '%s' "$prompt" | grep -q 'TASK: T1'; then printf 'one\n' > result1.txt; fi
 if printf '%s' "$prompt" | grep -q 'TASK: T2'; then printf 'two\n' > result2.txt; fi
-echo 'GOAL_LOOP_RESULT: DONE'
+echo 'GPTGRILL_CODEXWORK_RESULT: DONE'
 `);
   await chmod(fake, 0o755);
   const runner = new GoalRunner(config(root, work, fake));
@@ -79,8 +79,8 @@ echo 'GOAL_LOOP_RESULT: DONE'
   assert.equal(await runner.runOnce(), false, 'same revision must not cross the human boundary');
 
   manifest.revision = 2;
-  await writeFile(path.join(seed, '.goal-loop', 'dispatch', 'G1.json'), JSON.stringify(manifest, null, 2));
-  await sh('git', ['add', '.goal-loop/dispatch/G1.json'], seed);
+  await writeFile(path.join(seed, '.gptgrill-codexwork', 'dispatch', 'G1.json'), JSON.stringify(manifest, null, 2));
+  await sh('git', ['add', '.gptgrill-codexwork/dispatch/G1.json'], seed);
   await sh('git', ['commit', '-m', 'approve next task'], seed);
   await sh('git', ['push'], seed);
 
@@ -112,7 +112,7 @@ test('phase mode does not auto-start the next phase on the same revision', async
 prompt=$(cat)
 if printf '%s' "$prompt" | grep -q 'TASK: T1'; then printf 'one\n' > result1.txt; fi
 if printf '%s' "$prompt" | grep -q 'TASK: T2'; then printf 'two\n' > result2.txt; fi
-echo 'GOAL_LOOP_RESULT: DONE'
+echo 'GPTGRILL_CODEXWORK_RESULT: DONE'
 `);
   await chmod(fake, 0o755);
   const runner = new GoalRunner(config(root, work, fake));
@@ -124,8 +124,8 @@ echo 'GOAL_LOOP_RESULT: DONE'
   assert.equal(await runner.runOnce(), false);
 
   manifest.revision = 2;
-  await writeFile(path.join(seed, '.goal-loop', 'dispatch', 'G1.json'), JSON.stringify(manifest, null, 2));
-  await sh('git', ['add', '.goal-loop/dispatch/G1.json'], seed);
+  await writeFile(path.join(seed, '.gptgrill-codexwork', 'dispatch', 'G1.json'), JSON.stringify(manifest, null, 2));
+  await sh('git', ['add', '.gptgrill-codexwork/dispatch/G1.json'], seed);
   await sh('git', ['commit', '-m', 'approve phase 2'], seed);
   await sh('git', ['push'], seed);
 

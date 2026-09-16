@@ -39,21 +39,21 @@ export class GoalRunner {
       }
     }
 
-    if (!(await pathExists(path.join(this.config.workspace, '.goal-loop', 'dispatch')))) {
-      issues.push('.goal-loop/dispatch does not exist locally (run bootstrap)');
+    if (!(await pathExists(path.join(this.config.workspace, '.gptgrill-codexwork', 'dispatch')))) {
+      issues.push('.gptgrill-codexwork/dispatch does not exist locally (run bootstrap)');
     }
     return issues;
   }
 
   async bootstrap() {
-    const d = path.join(this.config.workspace, '.goal-loop', 'dispatch');
+    const d = path.join(this.config.workspace, '.gptgrill-codexwork', 'dispatch');
     await fs.mkdir(d, { recursive: true });
-    const r = path.join(this.config.workspace, '.goal-loop', 'README.md');
+    const r = path.join(this.config.workspace, '.gptgrill-codexwork', 'README.md');
     if (!(await pathExists(r))) {
       await fs.writeFile(r,
-        '# Goal Loop control plane\n\n' +
-        'ChatGPT writes `.goal-loop/dispatch/*.json`; local Goal Loop consumes them. ' +
-        'Runtime state lives outside the repo under `~/.goal-loop`.\n\n' +
+        '# GPTgrill-Codexwork control plane\n\n' +
+        'ChatGPT writes `.gptgrill-codexwork/dispatch/*.json`; local GPTgrill-Codexwork consumes them. ' +
+        'Runtime state lives outside the repo under `~/.gptgrill-codexwork`.\n\n' +
         'For `task` and `phase` modes, increment the manifest `revision` to explicitly resume after a boundary.\n');
     }
   }
@@ -127,7 +127,7 @@ export class GoalRunner {
     const e = m.execution ?? {};
     const remote = e.remote ?? this.config.controlRemote;
     const base = e.baseBranch ?? this.config.controlBranch;
-    const branch = e.workBranch ?? `goal-loop/${slug(m.goalId)}`;
+    const branch = e.workBranch ?? `gptgrill-codexwork/${slug(m.goalId)}`;
     const push = e.autoPush ?? true;
     const max = e.maxReviewIterations ?? 5;
     const phaseReview = e.phaseReview ?? true;

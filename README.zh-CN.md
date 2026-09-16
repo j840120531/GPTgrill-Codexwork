@@ -1,18 +1,18 @@
-# Goal Loop
+# GPTgrill-Codexwork
 
 [English](README.md)
 
-**ChatGPT 决定要做什么，Codex 负责把它做出来，ChatGPT 再独立审查，Goal Loop 负责让整个闭环持续运转。**
+**ChatGPT 决定要做什么，Codex 负责把它做出来，ChatGPT 再独立审查，GPTgrill-Codexwork 负责让整个闭环持续运转。**
 
-Goal Loop 是一个基于 Git 仓库的本地调度层，用来把 ChatGPT 网页端的需求讨论、Spec、Phase、Task，稳定地交给本地 Codex 执行，并通过 `codex-with-chatgpt` 让 ChatGPT 继续做规划、审查和修复反馈。
+GPTgrill-Codexwork 是一个基于 Git 仓库的本地调度层，用来把 ChatGPT 网页端的需求讨论、Spec、Phase、Task，稳定地交给本地 Codex 执行，并通过 `codex-with-chatgpt` 让 ChatGPT 继续做规划、审查和修复反馈。
 
 它的角色不是替代 `codex-with-chatgpt`，而是**在它上面再加一层任务调度和状态管理**。
 
 ---
 
-## Goal Loop 解决什么问题
+## GPTgrill-Codexwork 解决什么问题
 
-没有 Goal Loop 时，一个典型流程往往是：
+没有 GPTgrill-Codexwork 时，一个典型流程往往是：
 
 1. 在 ChatGPT 网页里讨论需求。
 2. 把需求问清楚。
@@ -24,7 +24,7 @@ Goal Loop 是一个基于 Git 仓库的本地调度层，用来把 ChatGPT 网�
 8. 把 review 意见复制回 Codex。
 9. 每一个 Task、每一个 Phase 都重复一次。
 
-Goal Loop 主要自动化的是第 4-9 步。
+GPTgrill-Codexwork 主要自动化的是第 4-9 步。
 
 理想体验会变成：
 
@@ -35,7 +35,7 @@ spec it
   -> 收敛成 spec-ready 的需求总结
 /goal phase
   -> 写 SPEC / PHASES / TASKS / dispatch
-  -> 本地 Goal Loop 自动发现任务
+  -> 本地 GPTgrill-Codexwork 自动发现任务
   -> Codex 自动执行
   -> ChatGPT 通过 codex-with-chatgpt 自动审查
   -> Codex 自动修复
@@ -63,25 +63,25 @@ spec it
 │      │                                                              │
 │      ├─ 澄清问题 / 约束 / Non-goals / Acceptance Criteria          │
 │      ▼                                                              │
-│  Goal Loop Web Skill                                                │
+│  GPTgrill-Codexwork Web Skill                                                │
 │      │                                                              │
 │      ├─ SPEC.md                                                     │
 │      ├─ PHASES.md                                                   │
 │      ├─ tasks/*.md                                                  │
-│      └─ .goal-loop/dispatch/<goal-id>.json                          │
+│      └─ .gptgrill-codexwork/dispatch/<goal-id>.json                          │
 └──────────────────────────────┬──────────────────────────────────────┘
                                │ GitHub / control branch
                                ▼
 ┌─────────────────────────────────────────────────────────────────────┐
 │ 目标项目 Repo                                                       │
 │                                                                     │
-│  specs/...                 .goal-loop/dispatch/...                  │
+│  specs/...                 .gptgrill-codexwork/dispatch/...                  │
 │       │                            │                                │
 └───────┼────────────────────────────┼────────────────────────────────┘
         │                            │ git fetch
         │                            ▼
         │                   ┌────────────────────┐
-        │                   │ Goal Loop Runner   │
+        │                   │ GPTgrill-Codexwork Runner   │
         │                   │ 本地调度 / 状态机  │
         │                   └─────────┬──────────┘
         │                             │ codex exec --full-auto
@@ -106,24 +106,24 @@ spec it
 |---|---|---|
 | ChatGPT Web | 需求、规划、Spec、Review、面向用户的决策 | 本地 shell 执行 |
 | Grill Me Skill | 把“到底要做什么”问清楚 | 实现代码 |
-| Goal Loop Web Skill | 把确认后的需求写成 repo artifact + dispatch | 启动本地进程 |
-| Goal Loop Runner | 监听 dispatch、决定下一个 Task、状态机、commit/push、report | 产品方向 |
+| GPTgrill-Codexwork Web Skill | 把确认后的需求写成 repo artifact + dispatch | 启动本地进程 |
+| GPTgrill-Codexwork Runner | 监听 dispatch、决定下一个 Task、状态机、commit/push、report | 产品方向 |
 | Codex | 改文件、跑命令、测试、实现 | 长期 scope 决策 |
 | codex-with-chatgpt | Codex ↔ ChatGPT 的 plan/review/fix 循环 | Phase/Task 调度 |
 | Git | 持久化的工程事实与交接层 | 临时 runtime 状态 |
 
 ---
 
-# 重要：Goal Loop 有两部分
+# 重要：GPTgrill-Codexwork 有两部分
 
-“Goal Loop”这个名字同时指网页 Skill 和本地 Runner，第一次看很容易混淆。
+“GPTgrill-Codexwork”这个名字同时指网页 Skill 和本地 Runner，第一次看很容易混淆。
 
 ## 1. ChatGPT 网页 Skill
 
 文件：
 
 ```text
-skills/goal-loop/SKILL.md
+skills/gptgrill-codexwork/SKILL.md
 ```
 
 这个安装在 ChatGPT 网页里。
@@ -137,10 +137,10 @@ skills/goal-loop/SKILL.md
   -> SPEC.md
   -> PHASES.md
   -> tasks/*.md
-  -> .goal-loop/dispatch/<goal-id>.json
+  -> .gptgrill-codexwork/dispatch/<goal-id>.json
 ```
 
-## 2. 本地 Goal Loop Runner
+## 2. 本地 GPTgrill-Codexwork Runner
 
 就是这个整个 repo 在 Mac 上的安装版本。
 
@@ -161,10 +161,10 @@ git fetch
 ```text
 ChatGPT 网页
   ├─ Grill Me Skill
-  └─ Goal Loop Skill
+  └─ GPTgrill-Codexwork Skill
 
 Mac 本地
-  ├─ Goal Loop Runner
+  ├─ GPTgrill-Codexwork Runner
   ├─ Codex CLI
   └─ codex-with-chatgpt Skill
 ```
@@ -175,12 +175,12 @@ Mac 本地
 
 不会。
 
-Goal Loop 就是按“你已经装了 codex-with-chatgpt”这个前提设计的。
+GPTgrill-Codexwork 就是按“你已经装了 codex-with-chatgpt”这个前提设计的。
 
 两者职责不同：
 
 ```text
-Goal Loop
+GPTgrill-Codexwork
   决定：下一步应该跑哪个 Task？
   决定：跑完一个 Task / Phase 后要不要停？
   管理：branch、runtime state、commit/push、report
@@ -191,13 +191,13 @@ codex-with-chatgpt
   循环：PLAN -> EXECUTION -> EXECUTED -> REVIEW -> PLAN/DONE
 ```
 
-`goal-loop doctor` 还会主动检查 Codex 环境里有没有安装 `codex-with-chatgpt` Skill。
+`gptgrill-codexwork doctor` 还会主动检查 Codex 环境里有没有安装 `codex-with-chatgpt` Skill。
 
 ---
 
 # ChatGPT Project 和本地 workspace 怎么绑定？
 
-Goal Loop 本身不会把“任意网页对话”绑定到“任意本地目录”。
+GPTgrill-Codexwork 本身不会把“任意网页对话”绑定到“任意本地目录”。
 
 workspace 身份主要由 **codex-with-chatgpt** 管理。
 
@@ -213,7 +213,7 @@ workspace 身份主要由 **codex-with-chatgpt** 管理。
 
 这可以避免一个无关的普通 Chat 意外控制到错误的本地 repo。
 
-Goal Loop 本地 Runner 只会处理你在那个 workspace 中配置的 Git repo，以及该 repo control branch 上出现的 dispatch。
+GPTgrill-Codexwork 本地 Runner 只会处理你在那个 workspace 中配置的 Git repo，以及该 repo control branch 上出现的 dispatch。
 
 ## Project mode 和固定 Controller Chat
 
@@ -242,7 +242,7 @@ c2c session set \
 
 这是可选配置。
 
-Goal Loop 自己不管理 ChatGPT conversation URL；对话路由属于 `codex-with-chatgpt`。
+GPTgrill-Codexwork 自己不管理 ChatGPT conversation URL；对话路由属于 `codex-with-chatgpt`。
 
 ---
 
@@ -287,12 +287,12 @@ spec it
 
 `spec it` 不会直接启动 Codex。
 
-## Goal Loop Web Skill
+## GPTgrill-Codexwork Web Skill
 
 文件：
 
 ```text
-skills/goal-loop/SKILL.md
+skills/gptgrill-codexwork/SKILL.md
 ```
 
 用途：
@@ -318,10 +318,10 @@ skills/goal-loop/SKILL.md
 
 ```text
 skills/grill-me/SKILL.md
-skills/goal-loop/SKILL.md
+skills/gptgrill-codexwork/SKILL.md
 ```
 
-**不要把整个 goal-loop repo ZIP 当成一个 Skill 上传。**
+**不要把整个 gptgrill-codexwork repo ZIP 当成一个 Skill 上传。**
 
 如果你是在 GitHub 上点：
 
@@ -332,11 +332,11 @@ Code -> Download ZIP
 下载整个仓库，那么先解压，然后找到：
 
 ```text
-goal-loop-main/
+gptgrill-codexwork-main/
   skills/
     grill-me/
       SKILL.md
-    goal-loop/
+    gptgrill-codexwork/
       SKILL.md
 ```
 
@@ -346,7 +346,7 @@ goal-loop-main/
 
 # 三种自治模式
 
-Goal Loop 故意把自治程度分成三档。
+GPTgrill-Codexwork 故意把自治程度分成三档。
 
 ## `task`
 
@@ -431,7 +431,7 @@ specs/
       P1-T02.md
       P2-T01.md
 
-.goal-loop/
+.gptgrill-codexwork/
   README.md
   dispatch/
     HZ-004.json
@@ -463,10 +463,10 @@ reports/
 - 本地错误状态；
 - watcher 内部运行状态。
 
-Goal Loop 把 runtime state 放在：
+GPTgrill-Codexwork 把 runtime state 放在：
 
 ```text
-~/.goal-loop/state/<workspace-hash>/<goal-id>.json
+~/.gptgrill-codexwork/state/<workspace-hash>/<goal-id>.json
 ```
 
 这样不会产生大量无意义的状态 commit。
@@ -478,7 +478,7 @@ Goal Loop 把 runtime state 放在：
 网页 GPT 会写：
 
 ```text
-.goal-loop/dispatch/<goal-id>.json
+.gptgrill-codexwork/dispatch/<goal-id>.json
 ```
 
 示例：
@@ -521,7 +521,7 @@ Goal Loop 把 runtime state 放在：
 
 `revision` 从 `1` 开始。
 
-对于 `task` 和 `phase` 模式，Goal Loop 到人工边界后会主动暂停。
+对于 `task` 和 `phase` 模式，GPTgrill-Codexwork 到人工边界后会主动暂停。
 
 如果你想继续，网页端应该把：
 
@@ -591,20 +591,20 @@ revision: 2
 2. 找到可执行 manifest
 3. 获取 workspace lock
 4. 确认 workspace 是 clean 的
-5. checkout / 创建 goal-loop/<goal-id>
+5. checkout / 创建 gptgrill-codexwork/<goal-id>
 6. merge 最新 control/base branch
 7. 读取 SPEC + 当前 Task
 8. 调用 Codex
 9. Codex 调用 codex-with-chatgpt
 10. ChatGPT PLAN / REVIEW
 11. Codex 修复直到 DONE 或 BLOCKED
-12. Goal Loop commit
-13. Goal Loop push
+12. GPTgrill-Codexwork commit
+13. GPTgrill-Codexwork push
 14. 更新本地 runtime state
 15. 根据 task/phase/goal 决定继续或暂停
 ```
 
-Goal Loop 实际调用 Codex 的形式等价于：
+GPTgrill-Codexwork 实际调用 Codex 的形式等价于：
 
 ```text
 codex exec --full-auto -C <workspace> -
@@ -622,7 +622,7 @@ codex exec --full-auto -C <workspace> -
 - review 不通过就继续修；
 - 不自己 commit / push。
 
-Git commit/push 统一由 Goal Loop 管，这样状态更确定。
+Git commit/push 统一由 GPTgrill-Codexwork 管，这样状态更确定。
 
 ---
 
@@ -631,13 +631,13 @@ Git commit/push 统一由 Goal Loop 管，这样状态更确定。
 默认工作分支：
 
 ```text
-goal-loop/<goal-id>
+gptgrill-codexwork/<goal-id>
 ```
 
 例如：
 
 ```text
-goal-loop/HZ-004
+gptgrill-codexwork/HZ-004
 ```
 
 默认 control branch：
@@ -649,17 +649,17 @@ origin/main
 可以通过环境变量修改：
 
 ```bash
-export GOAL_LOOP_CONTROL_REMOTE=origin
-export GOAL_LOOP_CONTROL_BRANCH=main
+export GPTGRILL_CODEXWORK_CONTROL_REMOTE=origin
+export GPTGRILL_CODEXWORK_CONTROL_BRANCH=main
 ```
 
-如果本地 workspace 有未提交修改，Goal Loop 默认会拒绝开始 autonomous run，避免把你正在做的工作混进自动执行结果里。
+如果本地 workspace 有未提交修改，GPTgrill-Codexwork 默认会拒绝开始 autonomous run，避免把你正在做的工作混进自动执行结果里。
 
 ---
 
 # Phase Review 和 Final Review
 
-Goal Loop 不只做单 Task review。
+GPTgrill-Codexwork 不只做单 Task review。
 
 一个 Phase 所有 Task 都完成后，可以额外执行一次：
 
@@ -700,11 +700,11 @@ reports/<goal-id>/FINAL.md
 
 前台手动运行并不强依赖 macOS，但自动常驻 watcher 目前使用的是 macOS `launchd`。
 
-## 安装 Goal Loop Runner
+## 安装 GPTgrill-Codexwork Runner
 
 ```bash
-git clone https://github.com/j840120531/goal-loop.git
-cd goal-loop
+git clone https://github.com/j840120531/GPTgrill-Codexwork.git
+cd gptgrill-codexwork
 npm install
 npm run build
 npm test
@@ -714,14 +714,14 @@ npm link
 验证：
 
 ```bash
-goal-loop --help
+gptgrill-codexwork --help
 ```
 
 ## 给某个项目 bootstrap
 
 ```bash
-goal-loop bootstrap --workspace /path/to/project
-goal-loop doctor --workspace /path/to/project
+gptgrill-codexwork bootstrap --workspace /path/to/project
+gptgrill-codexwork doctor --workspace /path/to/project
 ```
 
 `doctor` 会检查：
@@ -731,18 +731,18 @@ goal-loop doctor --workspace /path/to/project
 - `codex-with-chatgpt` Skill 是否存在；
 - control remote 是否配置；
 - control branch 能不能 fetch；
-- `.goal-loop/dispatch` 是否存在。
+- `.gptgrill-codexwork/dispatch` 是否存在。
 
 ## 手动跑一次
 
 ```bash
-goal-loop run --workspace /path/to/project
+gptgrill-codexwork run --workspace /path/to/project
 ```
 
 ## 安装 macOS 常驻 watcher
 
 ```bash
-goal-loop install-service --workspace /path/to/project
+gptgrill-codexwork install-service --workspace /path/to/project
 ```
 
 默认每 30 秒轮询一次。
@@ -750,13 +750,13 @@ goal-loop install-service --workspace /path/to/project
 日志：
 
 ```text
-~/Library/Logs/goal-loop/
+~/Library/Logs/gptgrill-codexwork/
 ```
 
 卸载：
 
 ```bash
-goal-loop uninstall-service --workspace /path/to/project
+gptgrill-codexwork uninstall-service --workspace /path/to/project
 ```
 
 ---
@@ -770,7 +770,7 @@ goal-loop uninstall-service --workspace /path/to/project
 建议直接在目标项目里让 Codex：
 
 ```text
-clone / pull Goal Loop
+clone / pull GPTgrill-Codexwork
 -> 运行 build/test
 -> npm link
 -> bootstrap 当前项目
@@ -818,7 +818,7 @@ spec it
 /goal phase
 ```
 
-Goal Loop Web Skill 会写：
+GPTgrill-Codexwork Web Skill 会写：
 
 ```text
 SPEC.md
@@ -829,7 +829,7 @@ dispatch.json
 
 ## 4. 本地自动开始执行
 
-Goal Loop watcher：
+GPTgrill-Codexwork watcher：
 
 ```text
 git fetch
@@ -880,16 +880,16 @@ reports/<goal-id>/<phase-id>.md
 
 # Status 与故障排查
 
-查看 Goal Loop 状态：
+查看 GPTgrill-Codexwork 状态：
 
 ```bash
-goal-loop status --workspace /path/to/project
+gptgrill-codexwork status --workspace /path/to/project
 ```
 
 健康检查：
 
 ```bash
-goal-loop doctor --workspace /path/to/project
+gptgrill-codexwork doctor --workspace /path/to/project
 ```
 
 ## 为什么任务没有启动？
@@ -902,7 +902,7 @@ goal-loop doctor --workspace /path/to/project
 - control branch fetch 失败；
 - `codex-with-chatgpt` Skill 不存在；
 - Spec 或 Task 文件缺失；
-- 另一个 Goal Loop process 已经持有 workspace lock。
+- 另一个 GPTgrill-Codexwork process 已经持有 workspace lock。
 
 ## 为什么任务变成 BLOCKED？
 
@@ -915,7 +915,7 @@ goal-loop doctor --workspace /path/to/project
 - Git merge / push 失败；
 - 当前 repo 实际状态和已批准 Spec 冲突。
 
-Goal Loop 的原则是：
+GPTgrill-Codexwork 的原则是：
 
 > 失败就停，不要为了“看起来完成”而偷偷跳过验收条件。
 
@@ -923,7 +923,7 @@ Goal Loop 的原则是：
 
 # 安全边界
 
-Goal Loop 是调度器，不是完整安全沙箱。
+GPTgrill-Codexwork 是调度器，不是完整安全沙箱。
 
 `codex exec --full-auto` 权限很强。
 
@@ -959,7 +959,7 @@ Goal Loop 是调度器，不是完整安全沙箱。
 ├── skills/
 │   ├── grill-me/
 │   │   └── SKILL.md
-│   └── goal-loop/
+│   └── gptgrill-codexwork/
 │       └── SKILL.md
 ├── src/
 │   ├── cli.js
@@ -1011,7 +1011,7 @@ npm test
 
 # 当前 Scope
 
-Goal Loop 当前聚焦的是：
+GPTgrill-Codexwork 当前聚焦的是：
 
 > 单机、本地 Codex、Git-backed、ChatGPT Web 驱动的开发闭环。
 
