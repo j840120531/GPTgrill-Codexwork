@@ -43,7 +43,7 @@ ChatGPT Web
 5. 告訴 Codex 去讀哪個 Spec / Task。
 6. 等 Codex 實現。
 7. 再手動回 ChatGPT 做 review。
-8. 把 review 意見覆制回 Codex。
+8. 把 review 意見複製回 Codex。
 9. 每一個 Task、每一個 Phase 都重複一次。
 
 GPTgrill-Codexwork 主要自動化的是第 4-9 步。
