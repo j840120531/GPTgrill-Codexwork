@@ -62,18 +62,12 @@ jobs:
           files[insert_at:insert_at] = wanted
           pkg['files'] = files
           pkg_path.write_text(json.dumps(pkg, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-
-          rel_path = Path('.github/workflows/release.yml')
-          rel = rel_path.read_text(encoding='utf-8')
-          rel = rel.replace('README.md README.zh-TW.md LICENSE', 'README.md README.zh-CN.md README.zh-TW.md LICENSE')
-          rel_path.write_text(rel, encoding='utf-8')
           PY
 
           git diff --check
           grep -q '\[简体中文\](README.zh-CN.md).*\[繁體中文\](README.zh-TW.md)' README.md
           grep -q '\[English\](README.md).*\[简体中文\](README.zh-CN.md)' README.zh-TW.md
           grep -q '\[English\](README.md).*\[繁體中文\](README.zh-TW.md)' README.zh-CN.md
-          grep -q 'README.zh-CN.md README.zh-TW.md LICENSE' .github/workflows/release.yml
 
       - name: Commit trilingual docs
         shell: bash
@@ -81,6 +75,6 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add README.md README.zh-CN.md README.zh-TW.md package.json .github/workflows/release.yml
+          git add README.md README.zh-CN.md README.zh-TW.md package.json
           git commit -m "docs: keep English Simplified and Traditional READMEs"
           git push origin HEAD:main
