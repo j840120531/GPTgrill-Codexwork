@@ -1,0 +1,86 @@
+name: Add Simplified Chinese README
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/add-simplified-readme-request'
+
+permissions:
+  contents: write
+
+jobs:
+  add-simplified:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install OpenCC
+        run: python3 -m pip install --quiet opencc-python-reimplemented
+
+      - name: Generate Simplified Chinese README and sync links
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          from opencc import OpenCC
+          import json
+
+          def set_language_line(text: str, line: str) -> str:
+              lines = text.splitlines()
+              if not lines or lines[0].strip() != '# GPTgrill-Codexwork':
+                  raise SystemExit('unexpected README heading')
+              if len(lines) < 3:
+                  raise SystemExit('unexpected README structure')
+              lines[2] = line
+              return '\n'.join(lines) + ('\n' if text.endswith('\n') else '')
+
+          tw_path = Path('README.zh-TW.md')
+          tw = tw_path.read_text(encoding='utf-8')
+          tw = set_language_line(tw, '[English](README.md) · [简体中文](README.zh-CN.md)')
+          tw_path.write_text(tw, encoding='utf-8')
+
+          cn = OpenCC('t2s').convert(tw)
+          cn = set_language_line(cn, '[English](README.md) · [繁體中文](README.zh-TW.md)')
+          Path('README.zh-CN.md').write_text(cn, encoding='utf-8')
+
+          en_path = Path('README.md')
+          en = en_path.read_text(encoding='utf-8')
+          en = set_language_line(en, '[简体中文](README.zh-CN.md) · [繁體中文](README.zh-TW.md)')
+          en_path.write_text(en, encoding='utf-8')
+
+          pkg_path = Path('package.json')
+          pkg = json.loads(pkg_path.read_text(encoding='utf-8'))
+          files = pkg.get('files', [])
+          wanted = ['README.md', 'README.zh-CN.md', 'README.zh-TW.md']
+          files = [x for x in files if x not in wanted]
+          insert_at = 1 if files and files[0] == 'src' else 0
+          files[insert_at:insert_at] = wanted
+          pkg['files'] = files
+          pkg_path.write_text(json.dumps(pkg, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+
+          rel_path = Path('.github/workflows/release.yml')
+          rel = rel_path.read_text(encoding='utf-8')
+          rel = rel.replace('README.md README.zh-TW.md LICENSE', 'README.md README.zh-CN.md README.zh-TW.md LICENSE')
+          rel_path.write_text(rel, encoding='utf-8')
+          PY
+
+          git diff --check
+          grep -q '\[简体中文\](README.zh-CN.md).*\[繁體中文\](README.zh-TW.md)' README.md
+          grep -q '\[English\](README.md).*\[简体中文\](README.zh-CN.md)' README.zh-TW.md
+          grep -q '\[English\](README.md).*\[繁體中文\](README.zh-TW.md)' README.zh-CN.md
+          grep -q 'README.zh-CN.md README.zh-TW.md LICENSE' .github/workflows/release.yml
+
+      - name: Commit trilingual docs
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add README.md README.zh-CN.md README.zh-TW.md package.json .github/workflows/release.yml
+          git commit -m "docs: keep English Simplified and Traditional READMEs"
+          git push origin HEAD:main
