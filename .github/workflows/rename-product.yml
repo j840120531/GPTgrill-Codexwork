@@ -57,6 +57,8 @@ jobs:
           for p in Path('.').rglob('*'):
               if not p.is_file() or any(part in skip_parts for part in p.parts):
                   continue
+              if len(p.parts) >= 3 and p.parts[0] == '.github' and p.parts[1] == 'workflows':
+                  continue
               if p.suffix.lower() in skip_suffixes:
                   continue
               try:
@@ -100,7 +102,7 @@ jobs:
           npm ci
           npm run check
 
-          if git grep -n -I -E 'Goal Loop|goal-loop|GOAL_LOOP|com\.goalloop' -- ':!docs/releases/v0.3.0.md'; then
+          if git grep -n -I -E 'Goal Loop|goal-loop|GOAL_LOOP|com\.goalloop' -- ':!.github/workflows/**'; then
             echo 'Found stale product identifiers after rename.' >&2
             exit 1
           fi
