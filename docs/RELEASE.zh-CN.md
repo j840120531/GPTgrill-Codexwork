@@ -38,42 +38,69 @@ codex --version
 
 如果你只有 Codex App，但终端里没有 `codex` 命令，那么还需要额外安装官方 Codex CLI，Goal Loop 才能自动启动任务。
 
-Codex App 和 CLI 属于同一个 Codex 生态，可以共享账号和配置上下文；只是 Goal Loop 当前明确依赖 CLI 作为执行入口。
+Codex App 和 CLI 属于同一个 Codex 生态；只是 Goal Loop 当前明确依赖 CLI 作为执行入口。
 
 以后如果要做 App Server / App-native adapter，可以作为新的执行适配器加入，但不是现在这版的前置条件。
 
-## 自动 Release 工作流
+## 推荐：完全在 GitHub 网页一键发布
 
-仓库里的：
+不需要在本地创建 tag，也不需要打开 Codex App。
+
+进入：
 
 ```text
-.github/workflows/release.yml
+GitHub repo
+→ Actions
+→ Release
+→ Run workflow
 ```
 
-会负责完整打包和发布。
+输入版本号，例如：
 
-例如准备发布 `v0.2.0`：
+```text
+0.2.0
+```
+
+或：
+
+```text
+v0.2.0
+```
+
+工作流会自动：
+
+1. 强制从当前 `main` HEAD 发布；
+2. 检查 `package.json` 与 `package-lock.json` 版本一致；
+3. 检查输入版本和 package version 一致；
+4. 拒绝覆盖已经存在的 tag 或 Release；
+5. 运行 `npm ci`；
+6. 运行 `npm run check`；
+7. 打包两个网页 Skill ZIP；
+8. 打包本地 Runner 的 `.tgz` 和 `.zip`；
+9. 生成 `SHA256SUMS.txt`；
+10. 创建 annotated Git tag；
+11. push tag；
+12. 创建 GitHub Release；
+13. 上传全部 Release Assets。
+
+也就是说，正常发布流程不再依赖你的 Mac。
+
+## 仍然支持 tag-triggered release
+
+如果有高级场景需要自己创建 tag，仍然可以：
 
 ```bash
 git tag -a v0.2.0 -m "Goal Loop v0.2.0"
 git push origin v0.2.0
 ```
 
-GitHub Actions 会自动：
+push `v*` tag 后，同一个 Release workflow 会验证、打包并发布。
 
-1. 运行 `npm ci`；
-2. 运行 `npm run check`；
-3. 检查 Git tag 版本是否和 `package.json` 一致；
-4. 打包两个网页 Skill ZIP；
-5. 打包本地 Runner 的 `.tgz` 和 `.zip`；
-6. 生成 SHA-256 校验文件；
-7. 创建 GitHub Release，并把所有文件作为 Release Assets 上传。
-
-工作流也支持手动 `workflow_dispatch`。手动运行时会打包并保存成 workflow artifact，但因为没有 tag，不会直接发布 GitHub Release。
+但对日常使用，推荐直接从 GitHub Actions 手动 Run workflow。
 
 ## 版本规则
 
-打 tag 前，先保证：
+发布前先保证：
 
 ```text
 package.json
@@ -82,19 +109,26 @@ package-lock.json
 
 使用同一个语义化版本号。
 
-如果 tag 是：
+例如准备发布：
 
 ```text
 v0.3.0
 ```
 
-但 `package.json` 仍然是：
+那么 `package.json` 与 `package-lock.json` 都必须是：
 
 ```text
-0.2.0
+0.3.0
 ```
 
-Release workflow 会直接失败，避免版本和安装包对不上。
+否则 Release workflow 会直接失败，避免 tag、Release 名称与安装包版本不一致。
+
+手动 GitHub Release 还会额外检查：
+
+- 必须发布当前 `main` HEAD；
+- tag 不得已存在；
+- Release 不得已存在；
+- 不会 force-update 旧 tag。
 
 ## 推荐安装方式
 
@@ -125,6 +159,8 @@ npm link
 goal-loop --help
 ```
 
+源码 ZIP 会包含 `test/`，因此 `npm run check` 可以在解压包里直接执行。
+
 然后对每个需要接入 Goal Loop 的项目执行：
 
 ```bash
@@ -132,3 +168,20 @@ goal-loop bootstrap --workspace /path/to/project
 goal-loop doctor --workspace /path/to/project
 goal-loop install-service --workspace /path/to/project
 ```
+
+## Release workflow 文件
+
+实现位于：
+
+```text
+.github/workflows/release.yml
+```
+
+它同时支持：
+
+```text
+workflow_dispatch
+push tags: v*
+```
+
+推荐把 GitHub Actions 视为正式发布入口；本地 Git 命令只保留为高级/兼容路径。
