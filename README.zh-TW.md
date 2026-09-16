@@ -1,6 +1,6 @@
 # GPTgrill-Codexwork
 
-[English](README.md)
+[English](README.md) · [简体中文](README.zh-CN.md)
 
 **讓高能力模型負責思考與決策，讓高效率 Agent 負責執行。**
 

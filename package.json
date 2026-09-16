@@ -9,6 +9,7 @@
   "files": [
     "src",
     "README.md",
+    "README.zh-CN.md",
     "README.zh-TW.md",
     "LICENSE",
     "INSTALL_FOR_CODEX.md",

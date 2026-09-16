@@ -1,6 +1,6 @@
 # GPTgrill-Codexwork
 
-[繁體中文](README.zh-TW.md)
+[简体中文](README.zh-CN.md) · [繁體中文](README.zh-TW.md)
 
 **ChatGPT decides what to build. Codex builds it. ChatGPT reviews it. GPTgrill-Codexwork keeps the loop moving.**
 
