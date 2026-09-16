@@ -6,7 +6,7 @@ Goal Loop ships two kinds of artifacts because the product itself has two layers
 
 ## Release assets
 
-Every tagged release should contain all of the following:
+Every release should contain all of the following:
 
 | Asset | Used for | Install / use |
 |---|---|---|
@@ -27,7 +27,7 @@ Goal Loop currently launches Codex through the `codex` command-line executable:
 codex exec --full-auto -C <workspace> -
 ```
 
-Using the Codex App for your normal interactive work is compatible with Goal Loop. However, the Goal Loop Runner still requires the Codex CLI command to be available on the machine because the runner does not currently drive the Codex App GUI.
+Using the Codex App for normal interactive work is compatible with Goal Loop. However, the Goal Loop Runner still requires the Codex CLI command to be available because the runner does not currently drive the Codex App GUI.
 
 Check:
 
@@ -40,38 +40,88 @@ If both work, nothing else is required. You can keep using Codex App manually wh
 
 If you only have the Codex App and `codex` is not available in the terminal, install the official Codex CLI as well before using Goal Loop.
 
-The Codex App and CLI are part of the same Codex ecosystem and can share account/configuration context, but Goal Loop's execution path is explicitly CLI-based today.
+A future version may add an App Server / app-native execution adapter, but that is not a requirement for the current release.
 
-A future Goal Loop version may add an App Server / app-native control adapter. That would be an alternative execution adapter, not a requirement for the current release.
+## Recommended: one-click release from GitHub
 
-## Automated release workflow
+You do not need to create a tag locally and you do not need Codex App for releasing.
 
-`.github/workflows/release.yml` validates and packages all release assets.
+Go to:
 
-On a tag such as:
+```text
+GitHub repository
+→ Actions
+→ Release
+→ Run workflow
+```
+
+Enter a version such as:
+
+```text
+0.2.0
+```
+
+or:
+
+```text
+v0.2.0
+```
+
+The workflow will automatically:
+
+1. release from the current `main` HEAD;
+2. verify that `package.json` and `package-lock.json` versions match;
+3. verify that the requested version matches the package version;
+4. refuse to overwrite an existing tag or Release;
+5. run `npm ci`;
+6. run `npm run check`;
+7. package both ChatGPT Web Skills;
+8. package the local Runner as `.tgz` and `.zip`;
+9. generate `SHA256SUMS.txt`;
+10. create an annotated Git tag;
+11. push the tag;
+12. create the GitHub Release;
+13. attach all release assets.
+
+This makes GitHub Actions the normal release control plane instead of your Mac.
+
+## Tag-triggered release is still supported
+
+For advanced cases, you may still create and push a tag yourself:
 
 ```bash
 git tag -a v0.2.0 -m "Goal Loop v0.2.0"
 git push origin v0.2.0
 ```
 
-GitHub Actions will:
+A pushed `v*` tag triggers the same validation, packaging, and release process.
 
-1. run `npm ci`;
-2. run `npm run check`;
-3. verify that the tag version matches `package.json`;
-4. package the two Web Skills;
-5. package the local Runner as both `.tgz` and `.zip`;
-6. generate SHA-256 checksums;
-7. create the GitHub Release and attach the assets.
+For normal use, prefer the manual GitHub Actions `Run workflow` path.
 
-The workflow also supports manual `workflow_dispatch`. A manual run builds the assets as a workflow artifact but does not publish a GitHub Release because no release tag exists.
+## Versioning rules
 
-## Versioning rule
+Before a release, `package.json` and `package-lock.json` must contain the same semantic version.
 
-Before creating a release tag, update `package.json` and `package-lock.json` to the same semantic version.
+For example, to publish:
 
-The release workflow deliberately fails when `vX.Y.Z` does not match `package.json` version `X.Y.Z`.
+```text
+v0.3.0
+```
+
+both package files must report:
+
+```text
+0.3.0
+```
+
+Otherwise the release workflow fails deliberately.
+
+A manual one-click release also enforces:
+
+- release source must be the current `main` HEAD;
+- the tag must not already exist;
+- the Release must not already exist;
+- old tags are never force-updated.
 
 ## Recommended install paths
 
@@ -102,6 +152,8 @@ npm link
 goal-loop --help
 ```
 
+The source ZIP includes `test/`, so `npm run check` works directly from the extracted release bundle.
+
 Then bootstrap each target workspace:
 
 ```bash
@@ -109,3 +161,20 @@ goal-loop bootstrap --workspace /path/to/project
 goal-loop doctor --workspace /path/to/project
 goal-loop install-service --workspace /path/to/project
 ```
+
+## Workflow source
+
+The implementation lives at:
+
+```text
+.github/workflows/release.yml
+```
+
+It supports both:
+
+```text
+workflow_dispatch
+push tags: v*
+```
+
+Treat GitHub Actions as the normal release entry point. Local Git tag commands remain available only as an advanced/compatibility path.
