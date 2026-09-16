@@ -2,66 +2,88 @@
 
 [English](README.md)
 
-**ChatGPT 决定要做什么，Codex 负责把它做出来，ChatGPT 再独立审查，GPTgrill-Codexwork 负责让整个闭环持续运转。**
+**讓高能力模型負責思考與決策，讓高效率 Agent 負責執行。**
 
-GPTgrill-Codexwork 是一个基于 Git 仓库的本地调度层，用来把 ChatGPT 网页端的需求讨论、Spec、Phase、Task，稳定地交给本地 Codex 执行，并通过 `codex-with-chatgpt` 让 ChatGPT 继续做规划、审查和修复反馈。
+GPTgrill-Codexwork 的核心目的，是把 **ChatGPT 網頁端的高品質推理能力** 與 **本地 Codex 的工程執行能力** 串成一套可持續運作的開發工作流。
 
-它的角色不是替代 `codex-with-chatgpt`，而是**在它上面再加一层任务调度和状态管理**。
+在 ChatGPT 網頁端，可以依不同產品或 Repo 建立獨立 Project，使用當下可用的高能力模型（例如 GPT-5.6 Sol High）進行需求討論、Grill、架構設計、Spec 撰寫與關鍵決策。這一層負責的是「先把要做什麼想清楚」，並優先利用 ChatGPT 網頁端既有方案與額度，而不是把所有高階推理都轉成額外的 API token 消耗。
+
+需求定案後，GPTgrill-Codexwork 會把結果轉成可執行的 Spec、Phase、Task 與 Dispatch，交給本地 Codex。Codex 端則可以使用更適合大量執行工作的模型與設定，例如在環境支援時使用 Luna Max 搭配 subagents，平行處理程式閱讀、實作、測試、除錯與驗證；遇到需要高階判斷或獨立 Review 的節點，再透過 `codex-with-chatgpt` 回到 ChatGPT Controller Chat。
+
+換句話說，這套工具不是要讓最強模型包辦所有工作，而是刻意做**模型分工**：
+
+```text
+ChatGPT Web / GPT-5.6 Sol High
+  -> Grill / 需求澄清 / 架構 / Spec / 關鍵決策 / Review
+
+Git + GPTgrill-Codexwork
+  -> 保存工程狀態 / 任務調度 / Phase & Task 邊界 / 自動交接
+
+Codex / Luna Max + subagents（若環境支援）
+  -> 大量程式閱讀 / 實作 / 測試 / 修復 / 平行工作
+
+ChatGPT Web
+  -> 獨立審查 / 階段性決策 / 下一輪規劃
+```
+
+這樣做的目標，是在維持高品質決策的同時，把大量執行工作交給速度更快、成本更低的 Agent 層，降低不必要的高階模型 token 消耗，並讓一個人能更有效率地同時管理多個專案與 Repo。
+
+> 模型名稱、方案與可用額度可能隨 OpenAI 產品調整。本專案不假設任何模型「永久免費」或「永久無上限」；核心設計是把高成本推理集中在真正需要的節點，並讓執行層盡量使用更高效率的模型與 subagents。
 
 ---
 
-## GPTgrill-Codexwork 解决什么问题
+## GPTgrill-Codexwork 解決什麼問題
 
-没有 GPTgrill-Codexwork 时，一个典型流程往往是：
+沒有 GPTgrill-Codexwork 時，一個典型流程往往是：
 
-1. 在 ChatGPT 网页里讨论需求。
-2. 把需求问清楚。
-3. 写 Spec。
-4. 手动切到 Codex。
-5. 告诉 Codex 去读哪个 Spec / Task。
-6. 等 Codex 实现。
-7. 再手动回 ChatGPT 做 review。
-8. 把 review 意见复制回 Codex。
-9. 每一个 Task、每一个 Phase 都重复一次。
+1. 在 ChatGPT 網頁裡討論需求。
+2. 把需求問清楚。
+3. 寫 Spec。
+4. 手動切到 Codex。
+5. 告訴 Codex 去讀哪個 Spec / Task。
+6. 等 Codex 實現。
+7. 再手動回 ChatGPT 做 review。
+8. 把 review 意見覆制回 Codex。
+9. 每一個 Task、每一個 Phase 都重複一次。
 
-GPTgrill-Codexwork 主要自动化的是第 4-9 步。
+GPTgrill-Codexwork 主要自動化的是第 4-9 步。
 
-理想体验会变成：
+理想體驗會變成：
 
 ```text
 /grill
-  -> 把需求问清楚
+  -> 把需求問清楚
 spec it
-  -> 收敛成 spec-ready 的需求总结
+  -> 收斂成 spec-ready 的需求總結
 /goal phase
-  -> 写 SPEC / PHASES / TASKS / dispatch
-  -> 本地 GPTgrill-Codexwork 自动发现任务
-  -> Codex 自动执行
-  -> ChatGPT 通过 codex-with-chatgpt 自动审查
-  -> Codex 自动修复
+  -> 寫 SPEC / PHASES / TASKS / dispatch
+  -> 本地 GPTgrill-Codexwork 自動發現任務
+  -> Codex 自動執行
+  -> ChatGPT 透過 codex-with-chatgpt 自動審查
+  -> Codex 自動修復
   -> 生成 Phase Report
-  -> 停下来等你确认下一阶段
+  -> 停下來等你確認下一階段
 ```
 
-如果你明确想一路跑到底：
+如果你明確想一路跑到底：
 
 ```text
 /loop
-  -> 一直按 Phase 执行
-  -> 直到整个 Goal 完成或 BLOCKED
+  -> 一直按 Phase 執行
+  -> 直到整個 Goal 完成或 BLOCKED
 ```
 
 ---
 
-# 整体架构
+# 整體架構
 
 ```text
 ┌─────────────────────────────────────────────────────────────────────┐
-│ ChatGPT 网页 Project                                                │
+│ ChatGPT 網頁 Project                                                │
 │                                                                     │
 │  Grill Me Skill                                                     │
 │      │                                                              │
-│      ├─ 澄清问题 / 约束 / Non-goals / Acceptance Criteria          │
+│      ├─ 澄清問題 / 約束 / Non-goals / Acceptance Criteria          │
 │      ▼                                                              │
 │  GPTgrill-Codexwork Web Skill                                                │
 │      │                                                              │
@@ -73,7 +95,7 @@ spec it
                                │ GitHub / control branch
                                ▼
 ┌─────────────────────────────────────────────────────────────────────┐
-│ 目标项目 Repo                                                       │
+│ 目標專案 Repo                                                       │
 │                                                                     │
 │  specs/...                 .gptgrill-codexwork/dispatch/...                  │
 │       │                            │                                │
@@ -82,14 +104,14 @@ spec it
         │                            ▼
         │                   ┌────────────────────┐
         │                   │ GPTgrill-Codexwork Runner   │
-        │                   │ 本地调度 / 状态机  │
+        │                   │ 本地排程 / 狀態機  │
         │                   └─────────┬──────────┘
         │                             │ codex exec --full-auto
         │                             ▼
         │                        ┌──────────┐
         │                        │  Codex   │
         │                        └────┬─────┘
-        │                             │ 使用已安装 Skill
+        │                             │ 使用已安裝 Skill
         │                             ▼
         │                  ┌──────────────────────┐
         └─────────────────►│ codex-with-chatgpt   │
@@ -97,43 +119,43 @@ spec it
                            └──────────┬───────────┘
                                       │
                                       ▼
-                                  ChatGPT 审查
+                                  ChatGPT 審查
 ```
 
-## 每一层分别负责什么
+## 每一層分別負責什麼
 
-| 组件 | 负责 | 不应该负责 |
+| 元件 | 負責 | 不應該負責 |
 |---|---|---|
-| ChatGPT Web | 需求、规划、Spec、Review、面向用户的决策 | 本地 shell 执行 |
-| Grill Me Skill | 把“到底要做什么”问清楚 | 实现代码 |
-| GPTgrill-Codexwork Web Skill | 把确认后的需求写成 repo artifact + dispatch | 启动本地进程 |
-| GPTgrill-Codexwork Runner | 监听 dispatch、决定下一个 Task、状态机、commit/push、report | 产品方向 |
-| Codex | 改文件、跑命令、测试、实现 | 长期 scope 决策 |
-| codex-with-chatgpt | Codex ↔ ChatGPT 的 plan/review/fix 循环 | Phase/Task 调度 |
-| Git | 持久化的工程事实与交接层 | 临时 runtime 状态 |
+| ChatGPT Web | 需求、規劃、Spec、Review、面向使用者的決策 | 本地 shell 執行 |
+| Grill Me Skill | 把“到底要做什麼”問清楚 | 實現程式碼 |
+| GPTgrill-Codexwork Web Skill | 把確認後的需求寫成 repo artifact + dispatch | 啟動本地程序 |
+| GPTgrill-Codexwork Runner | 監聽 dispatch、決定下一個 Task、狀態機、commit/push、report | 產品方向 |
+| Codex | 改檔案、跑命令、測試、實現 | 長期 scope 決策 |
+| codex-with-chatgpt | Codex ↔ ChatGPT 的 plan/review/fix 迴圈 | Phase/Task 排程 |
+| Git | 持久化的工程事實與交接層 | 臨時 runtime 狀態 |
 
 ---
 
-# 重要：GPTgrill-Codexwork 有两部分
+# 重要：GPTgrill-Codexwork 有兩部分
 
-“GPTgrill-Codexwork”这个名字同时指网页 Skill 和本地 Runner，第一次看很容易混淆。
+“GPTgrill-Codexwork”這個名字同時指網頁 Skill 和本地 Runner，第一次看很容易混淆。
 
-## 1. ChatGPT 网页 Skill
+## 1. ChatGPT 網頁 Skill
 
-文件：
+檔案：
 
 ```text
 skills/gptgrill-codexwork/SKILL.md
 ```
 
-这个安装在 ChatGPT 网页里。
+這個安裝在 ChatGPT 網頁裡。
 
-它**不会直接在你的 Mac 上运行 Codex**。
+它**不會直接在你的 Mac 上執行 Codex**。
 
 它做的是：
 
 ```text
-讨论结果
+討論結果
   -> SPEC.md
   -> PHASES.md
   -> tasks/*.md
@@ -142,24 +164,24 @@ skills/gptgrill-codexwork/SKILL.md
 
 ## 2. 本地 GPTgrill-Codexwork Runner
 
-就是这个整个 repo 在 Mac 上的安装版本。
+就是這個整個 repo 在 Mac 上的安裝版本。
 
-它负责：
+它負責：
 
 ```text
 git fetch
   -> 找到新的 dispatch
-  -> 判断是否允许执行
-  -> 自动启动 Codex
-  -> 管理 Task/Phase/Goal 状态
+  -> 判斷是否允許執行
+  -> 自動啟動 Codex
+  -> 管理 Task/Phase/Goal 狀態
   -> commit / push
-  -> 生成报告
+  -> 生成報告
 ```
 
-所以完整安装关系是：
+所以完整安裝關係是：
 
 ```text
-ChatGPT 网页
+ChatGPT 網頁
   ├─ Grill Me Skill
   └─ GPTgrill-Codexwork Skill
 
@@ -171,63 +193,63 @@ Mac 本地
 
 ---
 
-# 和 codex-with-chatgpt 会不会冲突？
+# 和 codex-with-chatgpt 會不會衝突？
 
-不会。
+不會。
 
-GPTgrill-Codexwork 就是按“你已经装了 codex-with-chatgpt”这个前提设计的。
+GPTgrill-Codexwork 就是按“你已經裝了 codex-with-chatgpt”這個前提設計的。
 
-两者职责不同：
+兩者職責不同：
 
 ```text
 GPTgrill-Codexwork
-  决定：下一步应该跑哪个 Task？
-  决定：跑完一个 Task / Phase 后要不要停？
+  決定：下一步應該跑哪個 Task？
+  決定：跑完一個 Task / Phase 後要不要停？
   管理：branch、runtime state、commit/push、report
 
 codex-with-chatgpt
-  和 ChatGPT 一起决定：这个 Task 应该怎么实现？
-  让 ChatGPT 独立读取当前 workspace 做 review
-  循环：PLAN -> EXECUTION -> EXECUTED -> REVIEW -> PLAN/DONE
+  和 ChatGPT 一起決定：這個 Task 應該怎麼實現？
+  讓 ChatGPT 獨立讀取當前 workspace 做 review
+  迴圈：PLAN -> EXECUTION -> EXECUTED -> REVIEW -> PLAN/DONE
 ```
 
-`gptgrill-codexwork doctor` 还会主动检查 Codex 环境里有没有安装 `codex-with-chatgpt` Skill。
+`gptgrill-codexwork doctor` 還會主動檢查 Codex 環境裡有沒有安裝 `codex-with-chatgpt` Skill。
 
 ---
 
-# ChatGPT Project 和本地 workspace 怎么绑定？
+# ChatGPT Project 和本地 workspace 怎麼繫結？
 
-GPTgrill-Codexwork 本身不会把“任意网页对话”绑定到“任意本地目录”。
+GPTgrill-Codexwork 本身不會把“任意網頁對話”繫結到“任意本地目錄”。
 
 workspace 身份主要由 **codex-with-chatgpt** 管理。
 
-推荐模型是：
+推薦模型是：
 
 ```text
-一个本地 workspace
+一個本地 workspace
     ↕
-一个 codex-with-chatgpt connector
+一個 codex-with-chatgpt connector
     ↕
-一个 ChatGPT Project
+一個 ChatGPT Project
 ```
 
-这可以避免一个无关的普通 Chat 意外控制到错误的本地 repo。
+這可以避免一個無關的普通 Chat 意外控制到錯誤的本地 repo。
 
-GPTgrill-Codexwork 本地 Runner 只会处理你在那个 workspace 中配置的 Git repo，以及该 repo control branch 上出现的 dispatch。
+GPTgrill-Codexwork 本地 Runner 只會處理你在那個 workspace 中配置的 Git repo，以及該 repo control branch 上出現的 dispatch。
 
 ## Project mode 和固定 Controller Chat
 
-`codex-with-chatgpt` 支持不同对话模式。
+`codex-with-chatgpt` 支援不同對話模式。
 
 如果你希望：
 
-- 平时就在一个主对话里讨论需求，
-- `/grill` 也在这里，
-- `/goal phase` 也在这里，
-- Codex 的 C2C plan/review 也回到这里，
-- Phase 完成后继续在这里汇报，
+- 平時就在一個主對話裡討論需求，
+- `/grill` 也在這裡，
+- `/goal phase` 也在這裡，
+- Codex 的 C2C plan/review 也回到這裡，
+- Phase 完成後繼續在這裡彙報，
 
-可以把一个长期对话作为 **Controller Chat**，并使用 `long-chat` 模式。
+可以把一個長期對話作為 **Controller Chat**，並使用 `long-chat` 模式。
 
 例如：
 
@@ -240,19 +262,19 @@ c2c session set \
   --url "https://chatgpt.com/c/<controller-chat-id>"
 ```
 
-这是可选配置。
+這是可選配置。
 
-GPTgrill-Codexwork 自己不管理 ChatGPT conversation URL；对话路由属于 `codex-with-chatgpt`。
+GPTgrill-Codexwork 自己不管理 ChatGPT conversation URL；對話路由屬於 `codex-with-chatgpt`。
 
 ---
 
-# 网页 Skills
+# 網頁 Skills
 
-当前 repo 内有两个网页 Skill。
+當前 repo 內有兩個網頁 Skill。
 
 ## Grill Me
 
-文件：
+檔案：
 
 ```text
 skills/grill-me/SKILL.md
@@ -260,12 +282,12 @@ skills/grill-me/SKILL.md
 
 用途：
 
-- 把真实问题问清楚；
-- 区分“目标”和“你当前想到的解决方案”；
-- 挑战假设；
-- 明确 scope / non-goals；
-- 找出约束、边界条件、失败场景；
-- 写出可验证的 acceptance criteria。
+- 把真實問題問清楚；
+- 區分“目標”和“你當前想到的解決方案”；
+- 挑戰假設；
+- 明確 scope / non-goals；
+- 找出約束、邊界條件、失敗場景；
+- 寫出可驗證的 acceptance criteria。
 
 常用控制：
 
@@ -279,17 +301,17 @@ spec it
 
 其中：
 
-- `/grill`：开始或继续需求追问；
-- `harder`：更强地挑战假设和矛盾；
-- `skip`：跳过当前问题；
-- `summary`：看目前已经确认到哪里；
-- `spec it`：需求足够清楚后，生成 spec-ready synthesis。
+- `/grill`：開始或繼續需求追問；
+- `harder`：更強地挑戰假設和矛盾；
+- `skip`：跳過當前問題；
+- `summary`：看目前已經確認到哪裡；
+- `spec it`：需求足夠清楚後，生成 spec-ready synthesis。
 
-`spec it` 不会直接启动 Codex。
+`spec it` 不會直接啟動 Codex。
 
 ## GPTgrill-Codexwork Web Skill
 
-文件：
+檔案：
 
 ```text
 skills/gptgrill-codexwork/SKILL.md
@@ -297,11 +319,11 @@ skills/gptgrill-codexwork/SKILL.md
 
 用途：
 
-- 把已经确认的需求写成正式 Spec；
+- 把已經確認的需求寫成正式 Spec；
 - 拆 Phase；
 - 拆 Task；
-- 写 dispatch；
-- 选择自治级别。
+- 寫 dispatch；
+- 選擇自治級別。
 
 常用控制：
 
@@ -312,24 +334,24 @@ skills/gptgrill-codexwork/SKILL.md
 /loop
 ```
 
-## 网页手动安装 Skill
+## 網頁手動安裝 Skill
 
-如果你的 ChatGPT 网页支持直接上传 Skill，分别上传：
+如果你的 ChatGPT 網頁支援直接上傳 Skill，分別上傳：
 
 ```text
 skills/grill-me/SKILL.md
 skills/gptgrill-codexwork/SKILL.md
 ```
 
-**不要把整个 gptgrill-codexwork repo ZIP 当成一个 Skill 上传。**
+**不要把整個 gptgrill-codexwork repo ZIP 當成一個 Skill 上傳。**
 
-如果你是在 GitHub 上点：
+如果你是在 GitHub 上點：
 
 ```text
 Code -> Download ZIP
 ```
 
-下载整个仓库，那么先解压，然后找到：
+下載整個倉庫，那麼先解壓，然後找到：
 
 ```text
 gptgrill-codexwork-main/
@@ -340,23 +362,23 @@ gptgrill-codexwork-main/
       SKILL.md
 ```
 
-把这两个 `SKILL.md` 分别上传即可。
+把這兩個 `SKILL.md` 分別上傳即可。
 
 ---
 
-# 三种自治模式
+# 三種自治模式
 
-GPTgrill-Codexwork 故意把自治程度分成三档。
+GPTgrill-Codexwork 故意把自治程度分成三檔。
 
 ## `task`
 
-只做当前一个未完成 Task，审查、push，然后暂停。
+只做當前一個未完成 Task，審查、push，然後暫停。
 
-适合：
+適合：
 
-- 高风险功能；
-- 需求还在变化；
-- 你想紧密控制每一步。
+- 高風險功能；
+- 需求還在變化；
+- 你想緊密控制每一步。
 
 ```text
 Task 1
@@ -369,9 +391,9 @@ Task 1
 
 ## `phase`
 
-做完整个当前 Phase，执行 Phase integration review，生成报告，push，然后暂停。
+做完整個當前 Phase，執行 Phase integration review，生成報告，push，然後暫停。
 
-这是**推荐默认模式**。
+這是**推薦預設模式**。
 
 ```text
 P1-T01 -> review/fix
@@ -384,9 +406,9 @@ P1-T03 -> review/fix
 
 ## `goal`
 
-从当前状态一路做完整个 Goal，包括最终 review。
+從當前狀態一路做完整個 Goal，包括最終 review。
 
-对应：
+對應：
 
 ```text
 /goal full
@@ -411,13 +433,13 @@ Final review
   -> DONE
 ```
 
-如果中间 BLOCKED，会停止。
+如果中間 BLOCKED，會停止。
 
 ---
 
-# 目标项目中会产生哪些文件
+# 目標專案中會產生哪些檔案
 
-一个典型项目最终会长这样：
+一個典型專案最終會長這樣：
 
 ```text
 AGENTS.md
@@ -445,23 +467,23 @@ reports/
 
 ## Durable state vs transient state
 
-应该进 Git 的内容：
+應該進 Git 的內容：
 
 - Spec；
 - Task；
 - Acceptance Criteria；
-- Phase 定义；
+- Phase 定義；
 - Report；
 - Dispatch policy。
 
-不应该进 Git 的 runtime state：
+不應該進 Git 的 runtime state：
 
-- 当前执行到哪个 Task；
-- 当前 Phase；
+- 當前執行到哪個 Task；
+- 當前 Phase；
 - PID；
 - lock；
-- 本地错误状态；
-- watcher 内部运行状态。
+- 本地錯誤狀態；
+- watcher 內部執行狀態。
 
 GPTgrill-Codexwork 把 runtime state 放在：
 
@@ -469,13 +491,13 @@ GPTgrill-Codexwork 把 runtime state 放在：
 ~/.gptgrill-codexwork/state/<workspace-hash>/<goal-id>.json
 ```
 
-这样不会产生大量无意义的状态 commit。
+這樣不會產生大量無意義的狀態 commit。
 
 ---
 
 # Dispatch manifest
 
-网页 GPT 会写：
+網頁 GPT 會寫：
 
 ```text
 .gptgrill-codexwork/dispatch/<goal-id>.json
@@ -513,17 +535,17 @@ GPTgrill-Codexwork 把 runtime state 放在：
 }
 ```
 
-标准例子见：
+標準例子見：
 
 [`examples/dispatch.example.json`](examples/dispatch.example.json)
 
-## `revision` 是“明确授权继续”的 token
+## `revision` 是“明確授權繼續”的 token
 
-`revision` 从 `1` 开始。
+`revision` 從 `1` 開始。
 
-对于 `task` 和 `phase` 模式，GPTgrill-Codexwork 到人工边界后会主动暂停。
+對於 `task` 和 `phase` 模式，GPTgrill-Codexwork 到人工邊界後會主動暫停。
 
-如果你想继续，网页端应该把：
+如果你想繼續，網頁端應該把：
 
 ```text
 revision: 1
@@ -535,100 +557,100 @@ revision: 1
 revision: 2
 ```
 
-这代表：
+這代表：
 
-> 用户已经明确批准下一次执行。
+> 使用者已經明確批准下一次執行。
 
-这样即使 watcher 每 30 秒一直轮询，也不会因为“服务还活着”就偷偷继续下一阶段。
+這樣即使 watcher 每 30 秒一直輪詢，也不會因為“服務還活著”就偷偷繼續下一階段。
 
-如果之前是 BLOCKED，修好 Spec / Task 后也应该同步增加 `revision`，才会允许再次执行。
+如果之前是 BLOCKED，修好 Spec / Task 後也應該同步增加 `revision`，才會允許再次執行。
 
 ---
 
-# Task 应该怎么写
+# Task 應該怎麼寫
 
-不要写这种：
+不要寫這種：
 
 ```text
-优化 evaluator。
+最佳化 evaluator。
 ```
 
-这种 Task 对自动执行几乎没有约束力。
+這種 Task 對自動執行幾乎沒有約束力。
 
-推荐写成：
+推薦寫成：
 
 ```markdown
 # P1-T01 — Evaluator output validation
 
 ## Objective
-让非法 evaluator 输出稳定失败，并返回确定性的错误。
+讓非法 evaluator 輸出穩定失敗，並返回確定性的錯誤。
 
 ## Acceptance Criteria
-- [ ] 合法输出通过 schema validation。
-- [ ] 非法输出返回确定性的 validation error。
-- [ ] 现有 smoke cases 全部保持通过。
-- [ ] 不改变 scoring semantics。
+- [ ] 合法輸出透過 schema validation。
+- [ ] 非法輸出返回確定性的 validation error。
+- [ ] 現有 smoke cases 全部保持透過。
+- [ ] 不改變 scoring semantics。
 
 ## Constraints
-- 保持现有 public response schema。
-- 不修改无关评分逻辑。
+- 保持現有 public response schema。
+- 不修改無關評分邏輯。
 
 ## Out of Scope
-- 新增 evaluator 维度。
+- 新增 evaluator 維度。
 - UI 修改。
 ```
 
-自动审查是否靠谱，很大程度取决于 Acceptance Criteria 是否明确。
+自動審查是否靠譜，很大程度取決於 Acceptance Criteria 是否明確。
 
 ---
 
-# 本地执行时到底发生什么
+# 本地執行時到底發生什麼
 
-每个 Task 大致会经历：
+每個 Task 大致會經歷：
 
 ```text
 1. fetch control branch
-2. 找到可执行 manifest
-3. 获取 workspace lock
-4. 确认 workspace 是 clean 的
-5. checkout / 创建 gptgrill-codexwork/<goal-id>
+2. 找到可執行 manifest
+3. 獲取 workspace lock
+4. 確認 workspace 是 clean 的
+5. checkout / 建立 gptgrill-codexwork/<goal-id>
 6. merge 最新 control/base branch
-7. 读取 SPEC + 当前 Task
-8. 调用 Codex
-9. Codex 调用 codex-with-chatgpt
+7. 讀取 SPEC + 當前 Task
+8. 呼叫 Codex
+9. Codex 呼叫 codex-with-chatgpt
 10. ChatGPT PLAN / REVIEW
-11. Codex 修复直到 DONE 或 BLOCKED
+11. Codex 修復直到 DONE 或 BLOCKED
 12. GPTgrill-Codexwork commit
 13. GPTgrill-Codexwork push
 14. 更新本地 runtime state
-15. 根据 task/phase/goal 决定继续或暂停
+15. 根據 task/phase/goal 決定繼續或暫停
 ```
 
-GPTgrill-Codexwork 实际调用 Codex 的形式等价于：
+GPTgrill-Codexwork 實際呼叫 Codex 的形式等價於：
 
 ```text
 codex exec --full-auto -C <workspace> -
 ```
 
-给 Codex 的 prompt 会要求它：
+給 Codex 的 prompt 會要求它：
 
-- 读取 repo instructions；
-- 读取 Spec；
-- 读取当前 Task；
+- 讀取 repo instructions；
+- 讀取 Spec；
+- 讀取當前 Task；
 - 使用 `codex-with-chatgpt`；
-- 只实现当前 scope；
-- 跑测试；
-- 经过 ChatGPT 独立 review；
-- review 不通过就继续修；
+- 只實現當前 scope；
+- 跑測試；
+- 經過 ChatGPT 獨立 review；
+- review 不透過就繼續修；
 - 不自己 commit / push。
 
-Git commit/push 统一由 GPTgrill-Codexwork 管，这样状态更确定。
+Git commit/push 統一由 GPTgrill-Codexwork 管，這樣狀態更確定。
 
 ---
 
 # Branch 模型
 
-默认工作分支：
+預設工作分支：
 
 ```text
 gptgrill-codexwork/<goal-id>
@@ -640,46 +662,46 @@ gptgrill-codexwork/<goal-id>
 gptgrill-codexwork/HZ-004
 ```
 
-默认 control branch：
+預設 control branch：
 
 ```text
 origin/main
 ```
 
-可以通过环境变量修改：
+可以透過環境變數修改：
 
 ```bash
 export GPTGRILL_CODEXWORK_CONTROL_REMOTE=origin
 export GPTGRILL_CODEXWORK_CONTROL_BRANCH=main
 ```
 
-如果本地 workspace 有未提交修改，GPTgrill-Codexwork 默认会拒绝开始 autonomous run，避免把你正在做的工作混进自动执行结果里。
+如果本地 workspace 有未提交修改，GPTgrill-Codexwork 預設會拒絕開始 autonomous run，避免把你正在做的工作混進自動執行結果裡。
 
 ---
 
 # Phase Review 和 Final Review
 
-GPTgrill-Codexwork 不只做单 Task review。
+GPTgrill-Codexwork 不只做單 Task review。
 
-一个 Phase 所有 Task 都完成后，可以额外执行一次：
+一個 Phase 所有 Task 都完成後，可以額外執行一次：
 
 ```text
 Phase integration review
 ```
 
-目的是检查：
+目的是檢查：
 
-> 单独每个 Task 都对，但组合起来有没有出问题？
+> 單獨每個 Task 都對，但組合起來有沒有出問題？
 
-整个 Goal 完成后，还可以再做一次：
+整個 Goal 完成後，還可以再做一次：
 
 ```text
 Final goal review
 ```
 
-用完整 Spec、Acceptance Criteria、回归测试来验收最终结果。
+用完整 Spec、Acceptance Criteria、迴歸測試來驗收最終結果。
 
-报告会写到：
+報告會寫到：
 
 ```text
 reports/<goal-id>/<phase-id>.md
@@ -688,19 +710,19 @@ reports/<goal-id>/FINAL.md
 
 ---
 
-# 本地安装
+# 本地安裝
 
 ## 前置要求
 
-- macOS（当前内置 background service helper 使用 `launchd`）
+- macOS（當前內建 background service helper 使用 `launchd`）
 - Node.js >= 20
 - Git
-- 已安装并登录 Codex CLI
-- 目标 workspace 已安装并配置好 `codex-with-chatgpt`
+- 已安裝並登入 Codex CLI
+- 目標 workspace 已安裝並配置好 `codex-with-chatgpt`
 
-前台手动运行并不强依赖 macOS，但自动常驻 watcher 目前使用的是 macOS `launchd`。
+前臺手動執行並不強依賴 macOS，但自動常駐 watcher 目前使用的是 macOS `launchd`。
 
-## 安装 GPTgrill-Codexwork Runner
+## 安裝 GPTgrill-Codexwork Runner
 
 ```bash
 git clone https://github.com/j840120531/GPTgrill-Codexwork.git
@@ -711,49 +733,49 @@ npm test
 npm link
 ```
 
-验证：
+驗證：
 
 ```bash
 gptgrill-codexwork --help
 ```
 
-## 给某个项目 bootstrap
+## 給某個專案 bootstrap
 
 ```bash
 gptgrill-codexwork bootstrap --workspace /path/to/project
 gptgrill-codexwork doctor --workspace /path/to/project
 ```
 
-`doctor` 会检查：
+`doctor` 會檢查：
 
-- 当前目录是不是 Git repo；
+- 當前目錄是不是 Git repo；
 - Codex 命令是否可用；
 - `codex-with-chatgpt` Skill 是否存在；
 - control remote 是否配置；
 - control branch 能不能 fetch；
 - `.gptgrill-codexwork/dispatch` 是否存在。
 
-## 手动跑一次
+## 手動跑一次
 
 ```bash
 gptgrill-codexwork run --workspace /path/to/project
 ```
 
-## 安装 macOS 常驻 watcher
+## 安裝 macOS 常駐 watcher
 
 ```bash
 gptgrill-codexwork install-service --workspace /path/to/project
 ```
 
-默认每 30 秒轮询一次。
+預設每 30 秒輪詢一次。
 
-日志：
+日誌：
 
 ```text
 ~/Library/Logs/gptgrill-codexwork/
 ```
 
-卸载：
+解除安裝：
 
 ```bash
 gptgrill-codexwork uninstall-service --workspace /path/to/project
@@ -761,64 +783,64 @@ gptgrill-codexwork uninstall-service --workspace /path/to/project
 
 ---
 
-# 让 Codex 一次性帮你装好
+# 讓 Codex 一次性幫你裝好
 
-见：
+見：
 
 [`INSTALL_FOR_CODEX.md`](INSTALL_FOR_CODEX.md)
 
-建议直接在目标项目里让 Codex：
+建議直接在目標專案裡讓 Codex：
 
 ```text
 clone / pull GPTgrill-Codexwork
--> 运行 build/test
+-> 執行 build/test
 -> npm link
--> bootstrap 当前项目
+-> bootstrap 當前專案
 -> doctor
--> 检查 codex-with-chatgpt
--> 安装 watcher
--> 不要自动创建真实 Goal
+-> 檢查 codex-with-chatgpt
+-> 安裝 watcher
+-> 不要自動建立真實 Goal
 ```
 
 ---
 
-# 推荐的日常使用流程
+# 推薦的日常使用流程
 
 ## 1. 先 Grill
 
-在绑定对应 workspace 的 ChatGPT Project 里：
+在繫結對應 workspace 的 ChatGPT Project 裡：
 
 ```text
 /grill
-我想修改模拟医生的拒绝逻辑……
+我想修改模擬醫生的拒絕邏輯……
 ```
 
-一直讨论到 `SPEC-READY`。
+一直討論到 `SPEC-READY`。
 
-然后：
+然後：
 
 ```text
 spec it
 ```
 
-## 2. 人工确认需求方向
+## 2. 人工確認需求方向
 
-这一步不要省。
+這一步不要省。
 
-先确认：
+先確認：
 
-- 问题定义对不对；
-- scope 对不对；
-- non-goals 对不对；
-- acceptance criteria 能不能验证。
+- 問題定義對不對；
+- scope 對不對；
+- non-goals 對不對；
+- acceptance criteria 能不能驗證。
 
-## 3. 派发一个 Phase
+## 3. 派發一個 Phase
 
 ```text
 /goal phase
 ```
 
-GPTgrill-Codexwork Web Skill 会写：
+GPTgrill-Codexwork Web Skill 會寫：
 
 ```text
 SPEC.md
@@ -827,24 +849,24 @@ tasks/*.md
 dispatch.json
 ```
 
-## 4. 本地自动开始执行
+## 4. 本地自動開始執行
 
 GPTgrill-Codexwork watcher：
 
 ```text
 git fetch
 -> 看到新 revision
--> 自动启动 Codex
+-> 自動啟動 Codex
 ```
 
-## 5. Codex + ChatGPT 自动审查
+## 5. Codex + ChatGPT 自動審查
 
 ```text
 Codex
   -> EXECUTED
 ChatGPT
   -> REVIEW
-有问题
+有問題
   -> PLAN
 Codex
   -> 修
@@ -852,19 +874,19 @@ ChatGPT
   -> DONE
 ```
 
-## 6. Phase 完成后看 Report
+## 6. Phase 完成後看 Report
 
 ```text
 reports/<goal-id>/<phase-id>.md
 ```
 
-## 7. 决定是否继续
+## 7. 決定是否繼續
 
 如果是 `phase` 模式：
 
-> 你确认继续后，网页 GPT 增加 manifest `revision`。
+> 你確認繼續後，網頁 GPT 增加 manifest `revision`。
 
-如果想整条一路做完：
+如果想整條一路做完：
 
 ```text
 /goal full
@@ -878,72 +900,72 @@ reports/<goal-id>/<phase-id>.md
 
 ---
 
-# Status 与故障排查
+# Status 與故障排查
 
-查看 GPTgrill-Codexwork 状态：
+檢視 GPTgrill-Codexwork 狀態：
 
 ```bash
 gptgrill-codexwork status --workspace /path/to/project
 ```
 
-健康检查：
+健康檢查：
 
 ```bash
 gptgrill-codexwork doctor --workspace /path/to/project
 ```
 
-## 为什么任务没有启动？
+## 為什麼任務沒有啟動？
 
-常见原因：
+常見原因：
 
 - manifest `status` 不是 `ready`；
-- 到了 Task / Phase 边界但没有增加 `revision`；
+- 到了 Task / Phase 邊界但沒有增加 `revision`；
 - workspace 有未提交修改；
-- control branch fetch 失败；
+- control branch fetch 失敗；
 - `codex-with-chatgpt` Skill 不存在；
-- Spec 或 Task 文件缺失；
-- 另一个 GPTgrill-Codexwork process 已经持有 workspace lock。
+- Spec 或 Task 檔案缺失；
+- 另一個 GPTgrill-Codexwork process 已經持有 workspace lock。
 
-## 为什么任务变成 BLOCKED？
+## 為什麼任務變成 BLOCKED？
 
-常见原因：
+常見原因：
 
-- Codex 执行失败；
+- Codex 執行失敗；
 - C2C review 返回 BLOCKED；
-- Acceptance Criteria 无法满足；
-- Phase / Final review 没通过；
-- Git merge / push 失败；
-- 当前 repo 实际状态和已批准 Spec 冲突。
+- Acceptance Criteria 無法滿足；
+- Phase / Final review 沒透過；
+- Git merge / push 失敗；
+- 當前 repo 實際狀態和已批准 Spec 衝突。
 
-GPTgrill-Codexwork 的原则是：
+GPTgrill-Codexwork 的原則是：
 
-> 失败就停，不要为了“看起来完成”而偷偷跳过验收条件。
+> 失敗就停，不要為了“看起來完成”而偷偷跳過驗收條件。
 
 ---
 
-# 安全边界
+# 安全邊界
 
-GPTgrill-Codexwork 是调度器，不是完整安全沙箱。
+GPTgrill-Codexwork 是排程器，不是完整安全沙箱。
 
-`codex exec --full-auto` 权限很强。
+`codex exec --full-auto` 許可權很強。
 
-建议：
+建議：
 
-- 始终使用独立工作分支；
-- Spec 写清楚；
-- Acceptance Criteria 可验证；
-- 默认使用 `phase`；
-- 高风险改动使用 `task`；
-- 只有 scope 已经稳定时才使用 `/loop`；
-- 不要用无人值守的 full-goal 模式做破坏性 migration、credential rotation、生产基础设施变更等需要显式人工确认的操作。
+- 始終使用獨立工作分支；
+- Spec 寫清楚；
+- Acceptance Criteria 可驗證；
+- 預設使用 `phase`；
+- 高風險改動使用 `task`；
+- 只有 scope 已經穩定時才使用 `/loop`；
+- 不要用無人值守的 full-goal 模式做破壞性 migration、credential rotation、生產基礎設施變更等需要顯式人工確認的操作。
 
-详见：
+詳見：
 
 [`docs/SECURITY.md`](docs/SECURITY.md)
 
 ---
 
-# Repo 目录结构
+# Repo 目錄結構
 
 ```text
 .
@@ -979,7 +1001,7 @@ GPTgrill-Codexwork 是调度器，不是完整安全沙箱。
 
 ---
 
-# 开发
+# 開發
 
 ```bash
 npm install
@@ -987,43 +1009,43 @@ npm run build
 npm test
 ```
 
-如果修改 orchestration 行为，至少要验证：
+如果修改 orchestration 行為，至少要驗證：
 
 - manifest validation；
 - task / phase revision gate；
-- branch 行为；
+- branch 行為；
 - fake-Codex E2E；
-- BLOCKED state 行为。
+- BLOCKED state 行為。
 
 ---
 
-# 设计原则
+# 設計原則
 
-1. **Repo 才是持久化合同。** Chat history 是上下文，但真正执行应该以 Git 里的 Spec/Task 为准。
-2. **先确认人类意图，再给自治权。** 先 Grill，再 Dispatch。
-3. **自治程度分级。** Task、Phase、Goal 是不同的权限边界。
-4. **Codex 执行，ChatGPT 独立 Review。** 不让同一个 Agent 自己实现、自己验收。
-5. **Runtime state 放本地。** 不污染 Git 历史。
-6. **Acceptance Criteria 比“Agent 说已经好了”更重要。**
-7. **遇到冲突或不确定就停。** 不要偷偷扩大 scope 让任务看起来能通过。
+1. **Repo 才是持久化合同。** Chat history 是上下文，但真正執行應該以 Git 裡的 Spec/Task 為準。
+2. **先確認人類意圖，再給自治權。** 先 Grill，再 Dispatch。
+3. **自治程度分級。** Task、Phase、Goal 是不同的許可權邊界。
+4. **Codex 執行，ChatGPT 獨立 Review。** 不讓同一個 Agent 自己實現、自己驗收。
+5. **Runtime state 放本地。** 不汙染 Git 歷史。
+6. **Acceptance Criteria 比“Agent 說已經好了”更重要。**
+7. **遇到衝突或不確定就停。** 不要偷偷擴大 scope 讓任務看起來能透過。
 
 ---
 
-# 当前 Scope
+# 當前 Scope
 
-GPTgrill-Codexwork 当前聚焦的是：
+GPTgrill-Codexwork 當前聚焦的是：
 
-> 单机、本地 Codex、Git-backed、ChatGPT Web 驱动的开发闭环。
+> 單機、本地 Codex、Git-backed、ChatGPT Web 驅動的開發閉環。
 
 它目前不是：
 
-- 多用户托管 CI 平台；
-- 通用远程执行服务；
+- 多使用者託管 CI 平臺；
+- 通用遠端執行服務；
 - GitHub Actions 替代品；
 - `codex-with-chatgpt` 替代品；
 - 完整 multi-agent swarm runtime。
 
-当前目标非常明确：
+當前目標非常明確：
 
 ```text
 ChatGPT Web
@@ -1033,4 +1055,4 @@ ChatGPT Web
   -> report
 ```
 
-把这条链路做得足够清楚、可检查、可暂停、可恢复、可控。
+把這條鏈路做得足夠清楚、可檢查、可暫停、可恢復、可控。
