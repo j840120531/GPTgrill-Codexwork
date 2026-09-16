@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Release version, e.g. 0.2.0 or v0.2.0. Must match package.json.'
+        description: 'Release version, e.g. 0.3.0 or v0.3.0. Must match package.json.'
         required: true
         type: string
 
@@ -138,15 +138,15 @@ jobs:
           mkdir -p release-assets
 
           (cd skills && zip -qr "../release-assets/grill-me-web-skill-v${VERSION}.zip" grill-me)
-          (cd skills && zip -qr "../release-assets/goal-loop-web-skill-v${VERSION}.zip" goal-loop)
+          (cd skills && zip -qr "../release-assets/gptgrill-codexwork-web-skill-v${VERSION}.zip" gptgrill-codexwork)
 
           PACK_FILE="$(npm pack --pack-destination release-assets --silent | tail -n 1)"
-          mv "release-assets/${PACK_FILE}" "release-assets/goal-loop-local-v${VERSION}.tgz"
+          mv "release-assets/${PACK_FILE}" "release-assets/gptgrill-codexwork-local-v${VERSION}.tgz"
 
           git archive \
             --format=zip \
-            --prefix="goal-loop-v${VERSION}/" \
-            -o "release-assets/goal-loop-local-v${VERSION}.zip" \
+            --prefix="GPTgrill-Codexwork-v${VERSION}/" \
+            -o "release-assets/gptgrill-codexwork-local-v${VERSION}.zip" \
             HEAD \
             src test package.json package-lock.json README.md README.zh-CN.md LICENSE \
             INSTALL_FOR_CODEX.md docs examples skills
@@ -155,9 +155,9 @@ jobs:
             cd release-assets
             shasum -a 256 \
               grill-me-web-skill-v${VERSION}.zip \
-              goal-loop-web-skill-v${VERSION}.zip \
-              goal-loop-local-v${VERSION}.tgz \
-              goal-loop-local-v${VERSION}.zip \
+              gptgrill-codexwork-web-skill-v${VERSION}.zip \
+              gptgrill-codexwork-local-v${VERSION}.tgz \
+              gptgrill-codexwork-local-v${VERSION}.zip \
               > SHA256SUMS.txt
           )
 
@@ -166,7 +166,7 @@ jobs:
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
         with:
-          name: goal-loop-release-v${{ steps.version.outputs.version }}
+          name: gptgrill-codexwork-release-v${{ steps.version.outputs.version }}
           path: release-assets/
 
       - name: Create release tag
@@ -178,18 +178,18 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag -a "${TAG}" -m "Goal Loop ${TAG}"
+          git tag -a "${TAG}" -m "GPTgrill-Codexwork ${TAG}"
           git push origin "refs/tags/${TAG}"
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.tag }}
-          name: Goal Loop ${{ steps.version.outputs.tag }}
+          name: GPTgrill-Codexwork ${{ steps.version.outputs.tag }}
           generate_release_notes: true
           files: |
             release-assets/grill-me-web-skill-v${{ steps.version.outputs.version }}.zip
-            release-assets/goal-loop-web-skill-v${{ steps.version.outputs.version }}.zip
-            release-assets/goal-loop-local-v${{ steps.version.outputs.version }}.tgz
-            release-assets/goal-loop-local-v${{ steps.version.outputs.version }}.zip
+            release-assets/gptgrill-codexwork-web-skill-v${{ steps.version.outputs.version }}.zip
+            release-assets/gptgrill-codexwork-local-v${{ steps.version.outputs.version }}.tgz
+            release-assets/gptgrill-codexwork-local-v${{ steps.version.outputs.version }}.zip
             release-assets/SHA256SUMS.txt
