@@ -148,7 +148,7 @@ jobs:
             --prefix="GPTgrill-Codexwork-v${VERSION}/" \
             -o "release-assets/gptgrill-codexwork-local-v${VERSION}.zip" \
             HEAD \
-            src test package.json package-lock.json README.md README.zh-TW.md LICENSE \
+            src test package.json package-lock.json README.md README.zh-CN.md README.zh-TW.md LICENSE \
             INSTALL_FOR_CODEX.md docs examples skills
 
           (
