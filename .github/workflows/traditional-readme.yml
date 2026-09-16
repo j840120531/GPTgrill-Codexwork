@@ -19,70 +19,20 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Convert README to Traditional Chinese
+      - name: Install OpenCC
+        run: python3 -m pip install --quiet opencc-python-reimplemented
+
+      - name: Convert README
+        run: python3 scripts/convert_readme_traditional.py
+
+      - name: Verify
         shell: bash
         run: |
           set -euo pipefail
-          python3 -m pip install --quiet opencc-python-reimplemented
-          python3 - <<'PY'
-          from pathlib import Path
-          from opencc import OpenCC
-
-          readme_path = Path('README.zh-CN.md')
-          text = readme_path.read_text(encoding='utf-8')
-          text = OpenCC('s2twp').convert(text)
-
-          marker = '\n---\n'
-          if marker not in text:
-              raise SystemExit('README.zh-CN.md is missing the first horizontal-rule marker')
-
-          _, rest = text.split(marker, 1)
-          intro = '''# GPTgrill-Codexwork
-
-[English](README.md)
-
-**讓高能力模型負責思考與決策，讓高效率 Agent 負責執行。**
-
-GPTgrill-Codexwork 的核心目的，是把 **ChatGPT 網頁端的高品質推理能力** 與 **本地 Codex 的工程執行能力** 串成一套可持續運作的開發工作流。
-
-在 ChatGPT 網頁端，可以依不同產品或 Repo 建立獨立 Project，使用當下可用的高能力模型（例如 GPT-5.6 Sol High）進行需求討論、Grill、架構設計、Spec 撰寫與關鍵決策。這一層負責的是「先把要做什麼想清楚」，並優先利用 ChatGPT 網頁端既有方案與額度，而不是把所有高階推理都轉成額外的 API token 消耗。
-
-需求定案後，GPTgrill-Codexwork 會把結果轉成可執行的 Spec、Phase、Task 與 Dispatch，交給本地 Codex。Codex 端則可以使用更適合大量執行工作的模型與設定，例如在環境支援時使用 Luna Max 搭配 subagents，平行處理程式閱讀、實作、測試、除錯與驗證；遇到需要高階判斷或獨立 Review 的節點，再透過 `codex-with-chatgpt` 回到 ChatGPT Controller Chat。
-
-換句話說，這套工具不是要讓最強模型包辦所有工作，而是刻意做**模型分工**：
-
-```text
-ChatGPT Web / GPT-5.6 Sol High
-  -> Grill / 需求澄清 / 架構 / Spec / 關鍵決策 / Review
-
-Git + GPTgrill-Codexwork
-  -> 保存工程狀態 / 任務調度 / Phase & Task 邊界 / 自動交接
-
-Codex / Luna Max + subagents（若環境支援）
-  -> 大量程式閱讀 / 實作 / 測試 / 修復 / 平行工作
-
-ChatGPT Web
-  -> 獨立審查 / 階段性決策 / 下一輪規劃
-```
-
-這樣做的目標，是在維持高品質決策的同時，把大量執行工作交給速度更快、成本更低的 Agent 層，降低不必要的高階模型 token 消耗，並讓一個人能更有效率地同時管理多個專案與 Repo。
-
-> 模型名稱、方案與可用額度可能隨 OpenAI 產品調整。本專案不假設任何模型「永久免費」或「永久無上限」；核心設計是把高成本推理集中在真正需要的節點，並讓執行層盡量使用更高效率的模型與 subagents。
-'''
-
-          readme_path.write_text(intro + marker + rest, encoding='utf-8')
-
-          english = Path('README.md')
-          english_text = english.read_text(encoding='utf-8')
-          english_text = english_text.replace('[中文说明](README.zh-CN.md)', '[繁體中文](README.zh-CN.md)')
-          english.write_text(english_text, encoding='utf-8')
-          PY
-
           git diff --check
-
-          # Basic guard: the converted README should contain the new positioning section.
           grep -q '讓高能力模型負責思考與決策' README.zh-CN.md
           grep -q '模型名稱、方案與可用額度可能隨 OpenAI 產品調整' README.zh-CN.md
+          grep -q '\[繁體中文\](README.zh-CN.md)' README.md
 
       - name: Commit README update
         shell: bash
